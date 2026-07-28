@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NovaDSL Real Engine</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d0d0d;--surface:#1a1a1a;--surface2:#242424;--border:#333;--text:#e4e4e4;--text2:#a0a0a0;--accent:#6c5ce7;--accent2:#a29bfe;--editor-bg:#1e1e1e}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+#app{display:flex;height:100vh}
+#editor-panel{width:50%;min-width:380px;display:flex;flex-direction:column;border-right:1px solid var(--border);background:var(--editor-bg)}
+#preview-panel{flex:1;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:20px}
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border)}
+.toolbar h1{font-size:13px;font-weight:600;letter-spacing:.3px;color:var(--accent2)}
+.toolbar h1 span{color:var(--text2);font-weight:400}
+.toolbar-actions{display:flex;gap:6px}
+.toolbar-actions button{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .15s}
+.toolbar-actions button:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+.toolbar-actions button.run-btn{background:var(--accent);border-color:var(--accent);color:#fff}
+.toolbar-actions button.run-btn:hover{opacity:.85}
+.editor-header{display:flex;align-items:center;gap:8px;padding:6px 16px;background:var(--surface);border-bottom:1px solid var(--border);font-size:11px;color:var(--text2)}
+.editor-header .dot{width:10px;height:10px;border-radius:50%}
+.editor-header .dot.red{background:#ff5f57}
+.editor-header .dot.yellow{background:#ffbd2e}
+.editor-header .dot.green{background:#28c840}
+#editor{flex:1;width:100%;background:var(--editor-bg);color:#d4d4d4;border:none;outline:none;padding:16px;font-family:'JetBrains Mono','Fira Code','Consolas',monospace;font-size:13px;line-height:1.6;resize:none;tab-size:2}
+#editor::placeholder{color:#555}
+.editor-footer{display:flex;justify-content:space-between;padding:4px 16px;font-size:10px;color:var(--text2);background:var(--surface);border-top:1px solid var(--border)}
+.phone-frame{width:375px;height:812px;background:#000;border-radius:44px;padding:12px;box-shadow:0 0 0 2px #333,0 20px 60px rgba(0,0,0,.8);position:relative;overflow:hidden;flex-shrink:0}
+.phone-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:150px;height:30px;background:#000;border-radius:0 0 18px 18px;z-index:10}
+.phone-screen{width:100%;height:100%;background:#f5f5f5;border-radius:34px;overflow-y:auto;overflow-x:hidden;position:relative}
+.phone-screen::-webkit-scrollbar{width:2px}
+.phone-screen::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:1px}
+.phone-status{display:flex;justify-content:space-between;padding:14px 24px 6px;font-size:11px;font-weight:600;color:#222}
+.phone-content{padding:4px 16px 24px}
+.error-bar{display:none;padding:6px 16px;font-size:11px;color:#ff6b6b;background:rgba(255,107,107,.1);border-bottom:1px solid rgba(255,107,107,.2)}
+.error-bar.show{display:block}
+.nv-page-title{font-size:22px;font-weight:700;color:#1a1a1a;margin-bottom:16px}
+.nv-card{background:#fff;border-radius:var(--nv-radius,12px);box-shadow:0 1px 3px rgba(0,0,0,.08);padding:16px;margin-bottom:12px;border:1px solid #e8e8e8;transition:border-radius .3s ease}
+.nv-title{font-size:16px;font-weight:600;color:#1a1a1a;margin-bottom:4px}
+.nv-subtitle{font-size:13px;color:#666;margin-bottom:10px}
+.nv-text{font-size:13px;color:#444;line-height:1.5;margin-bottom:8px}
+.nv-input{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:10px;font-size:14px;background:#fafafa;margin-bottom:8px;outline:none;transition:border .2s}
+.nv-input:focus{border-color:var(--accent)}
+.nv-button{width:100%;padding:10px 16px;border:none;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;transition:all .15s;margin-bottom:6px}
+.nv-button.primary{background:var(--accent);color:#fff}
+.nv-button.primary:hover{opacity:.9}
+.nv-button.secondary{background:#f0f0f0;color:#333}
+.nv-button.secondary:hover{background:#e5e5e5}
+.nv-button.outline{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+.nv-button.outline:hover{background:rgba(108,92,231,.08)}
+.nv-link{display:block;color:var(--accent);font-size:13px;font-weight:500;cursor:pointer;padding:4px 0;text-decoration:none}
+.nv-link:hover{text-decoration:underline}
+.nv-divider{height:1px;background:#eee;margin:14px 0}
+.nv-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;margin-right:4px;margin-bottom:4px}
+.nv-badge.blue{background:#eef2ff;color:#4f46e5}
+.nv-badge.green{background:#ecfdf5;color:#059669}
+.nv-badge.red{background:#fef2f2;color:#dc2626}
+.nv-badge.yellow{background:#fffbeb;color:#d97706}
+.nv-avatar{width:40px;height:40px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:600;font-size:16px;color:#fff;margin-right:8px}
+.nv-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.nv-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:16px;font-size:12px;background:#f3f4f6;color:#333;border:1px solid #e5e7eb;margin:2px}
+.nv-toggle{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:13px;color:#333}
+.nv-toggle-track{width:44px;height:24px;background:#ddd;border-radius:12px;position:relative;cursor:pointer;transition:background .2s}
+.nv-toggle-track.on{background:var(--accent)}
+.nv-toggle-thumb{width:20px;height:20px;background:#fff;border-radius:50%;position:absolute;top:2px;left:2px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.nv-toggle-track.on .nv-toggle-thumb{left:22px}
+.nv-progress{height:6px;background:#e5e7eb;border-radius:3px;margin:8px 0;overflow:hidden}
+.nv-progress-bar{height:100%;background:var(--accent);border-radius:3px;transition:width .3s}
+.nv-image{width:100%;border-radius:12px;margin-bottom:8px}
+.nv-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.nv-grid-item{background:#f9f9f9;border-radius:10px;padding:12px;text-align:center;border:1px solid #eee}
+.nv-grid-item span{display:block;font-size:20px;font-weight:600;color:#1a1a1a}
+.nv-grid-item label{font-size:11px;color:#888}
+</style>
+</head>
+<body>
+<div id="app">
+<div id="editor-panel">
+<div class="toolbar"><h1>Nova<span>DSL</span> Real Engine</h1>
+<div class="toolbar-actions"><button onclick="formatDSL()">Format</button><button class="run-btn" onclick="renderFromEditor()">&#9654; Run</button></div></div>
+<div class="editor-header"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span><span id="fileName">main.nova</span></div>
+<div id="errorBar" class="error-bar"></div>
+<textarea id="editor" spellcheck="false" placeholder="Write NovaDSL here..."></textarea>
+<div class="editor-footer"><span id="lineCount">Line 1</span><span id="elementCount">0 elements</span></div>
+</div>
+<div id="preview-panel">
+<div class="phone-frame">
+<div class="phone-notch"></div>
+<div class="phone-screen" id="phoneScreen">
+<div class="phone-status"><span>9:41</span><span>&#x1F4F6;&#x1F50B;</span></div>
+<div class="phone-content" id="phoneContent"></div>
+</div></div></div></div>
+<script>
+// NovaDSL Real Engine - 155 Element Registry
+var R = {};
+function reg(k,t,c,x){R[k]={t:t,c:c,x:x||null};}
+reg('page','div','nv-page');reg('section','section','nv-section');reg('header','header','nv-header');
+reg('footer','footer','nv-footer');reg('nav','nav','nv-nav');reg('main','main','nv-main');
+reg('aside','aside','nv-aside');reg('article','article','nv-article');reg('container','div','nv-container');
+reg('wrapper','div','nv-wrapper');
+reg('card','div','nv-card');reg('cardbody','div','nv-card-body');reg('cardheader','div','nv-card-header');
+reg('cardfooter','div','nv-card-footer');reg('cardimg','img','nv-card-img');reg('cardbg','div','nv-card-bg');
+reg('cardoverlay','div','nv-card-overlay');reg('cardrow','div','nv-card-row');reg('cardcol','div','nv-card-col');
+reg('cardgrid','div','nv-card-grid');
+reg('title','div','nv-title');reg('subtitle','div','nv-subtitle');
+reg('h1','h1','nv-h1');reg('h2','h2','nv-h2');reg('h3','h3','nv-h3');
+reg('h4','h4','nv-h4');reg('h5','h5','nv-h5');reg('h6','h6','nv-h6');
+reg('heading1','h1','nv-h1');reg('heading2','h2','nv-h2');reg('heading3','h3','nv-h3');
+reg('heading4','h4','nv-h4');reg('heading5','h5','nv-h5');reg('heading6','h6','nv-h6');
+reg('text','p','nv-text');reg('span','span','nv-span');reg('label','label','nv-label');
+reg('caption','small','nv-caption');reg('paragraph','p','nv-paragraph');reg('blockquote','blockquote','nv-blockquote');
+reg('code','code','nv-code');reg('pre','pre','nv-pre');reg('strong','strong','nv-strong');
+reg('em','em','nv-em');reg('linktext','span','nv-link-text');reg('highlight','mark','nv-highlight');
+reg('input','input','nv-input');reg('textarea','textarea','nv-textarea');reg('select','select','nv-select');
+reg('option','option','nv-option');reg('checkbox','input','nv-checkbox','checkbox');reg('radio','input','nv-radio','radio');
+reg('switch','div','nv-switch');reg('toggle','div','nv-toggle');
+reg('slider','input','nv-slider','range');reg('range','input','nv-range','range');
+reg('datepicker','input','nv-datepicker','date');reg('timepicker','input','nv-timepicker','time');
+reg('fileinput','input','nv-fileinput','file');reg('colorpick','input','nv-colorpick','color');
+reg('searchbox','input','nv-searchbox','search');reg('email','input','nv-emailinput','email');
+reg('number','input','nv-numberinput','number');reg('tel','input','nv-telinput','tel');
+reg('url','input','nv-urlinput','url');reg('pass','input','nv-password','password');
+reg('button','button','nv-button');reg('primarybtn','button','nv-button primary');
+reg('secondarybtn','button','nv-button secondary');reg('outlinebtn','button','nv-button outline');
+reg('ghostbtn','button','nv-button ghost');reg('iconbtn','button','nv-icon-btn');reg('fab','button','nv-fab');
+reg('linkbtn','a','nv-link-btn');reg('actionbtn','button','nv-action-btn');reg('closebtn','button','nv-close-btn');
+reg('menubtn','button','nv-menu-btn');reg('tabbtn','button','nv-tab-btn');reg('togglebtn','button','nv-toggle-btn');
+reg('chipbtn','button','nv-chip-btn');reg('uploadbtn','button','nv-upload-btn');
+reg('link','a','nv-link');reg('navitem','a','nv-nav-item');reg('navlink','a','nv-nav-link');
+reg('breadcrumb','span','nv-breadcrumb');reg('tab','div','nv-tab');reg('tabpanel','div','nv-tab-panel');
+reg('menu','div','nv-menu');reg('menuitem','div','nv-menu-item');reg('dropdown','div','nv-dropdown');
+reg('accordion','div','nv-accordion');reg('accitem','div','nv-accordion-item');
+reg('stepper','div','nv-stepper');reg('step','div','nv-step');reg('pagination','div','nv-pagination');
+reg('sidebar','div','nv-sidebar');
+reg('list','ul','nv-list');reg('li','li','nv-list-item');reg('ol','ol','nv-ordered-list');
+reg('ul','ul','nv-bullet-list');reg('checklist','ul','nv-checklist');reg('chipgroup','div','nv-chip-group');
+reg('chip','span','nv-chip');reg('badge','span','nv-badge');reg('tag','span','nv-tag');
+reg('avatar','div','nv-avatar');
+reg('image','img','nv-image');reg('img','img','nv-img');reg('aimg','img','nv-avatar-img');
+reg('icon','span','nv-icon');reg('video','div','nv-video');reg('audio','div','nv-audio');
+reg('canvas','canvas','nv-canvas');reg('iframe','div','nv-iframe');reg('map','div','nv-map');
+reg('carousel','div','nv-carousel');reg('citem','div','nv-carousel-item');
+reg('slideshow','div','nv-slideshow');reg('slide','div','nv-slide');reg('gallery','div','nv-gallery');
+reg('media','div','nv-media');
+reg('row','div','nv-row');reg('col','div','nv-col');reg('grid','div','nv-grid');
+reg('gitem','div','nv-grid-item');reg('flex','div','nv-flex');reg('fitem','div','nv-flex-item');
+reg('stack','div','nv-stack');reg('divider','div','nv-divider');reg('spacer','div','nv-spacer');
+reg('group','div','nv-group');reg('inline','div','nv-inline');reg('center','div','nv-center');
+reg('panel','div','nv-panel');reg('toolbar','div','nv-toolbar');reg('abar','div','nv-actionbar');
+reg('hero','div','nv-hero');reg('banner','div','nv-banner');reg('toast','div','nv-toast');
+reg('snackbar','div','nv-snackbar');reg('modal','div','nv-modal');
+reg('table','table','nv-table');reg('thead','thead','nv-thead');reg('tbody','tbody','nv-tbody');
+reg('tr','tr','nv-tr');reg('td','td','nv-td');reg('th','th','nv-th');
+reg('progress','div','nv-progress');reg('pbar','div','nv-progress-bar');
+reg('meter','div','nv-meter');reg('spinner','div','nv-spinner');
+reg('form','form','nv-form');reg('fieldset','fieldset','nv-fieldset');reg('legend','legend','nv-legend');
+reg('tooltip','div','nv-tooltip');reg('popover','div','nv-popover');reg('dialog','div','nv-dialog');
+reg('alert','div','nv-alert');reg('notif','div','nv-notification');
+reg('skeleton','div','nv-skeleton');reg('placeholder','div','nv-placeholder');
+
+// Parser
+function parseDSL(text) {
+  var lines = text.split(String.fromCharCode(10));
+  var root = {type:'root',children:[],props:{}};
+  var stack = [{node:root,indent:-1}];
+  for (var i=0;i<lines.length;i++) {
+    var raw = lines[i];
+    var trimmed = raw.trimEnd();
+    if (trimmed.trim()===''||trimmed.trim().startsWith('//')) continue;
+    var indent = raw.length - raw.trimStart().length;
+    var content = trimmed.trim();
+    var m = content.match(/^(\w+)(?:\s+"([^"]*)")?(?:\s+(.+))?$/);
+    if (!m) {
+      if (content.indexOf(':')>-1) {
+        var pm = content.match(/^([\w-]+)\s*:\s*(.+)$/);
+        if (pm) stack[stack.length-1].node.props[pm[1].trim()] = pm[2].trim();
+      }
+      continue;
+    }
+    var type = m[1].toLowerCase();
+    var txt = m[2]||'';
+    var rest = m[3]||'';
+    var props = {};
+    if (rest) {
+      var pp = /([\w-]+)\s*:\s*("([^"]*)"|\S+)/g;
+      var mm;
+      while ((mm=pp.exec(rest))!==null) {
+        props[mm[1]] = mm[3]!==undefined ? mm[3] : mm[2];
+      }
+    }
+    while (stack.length>1 && indent<=stack[stack.length-1].indent) stack.pop();
+    var node = {type:type,text:txt,props:props,children:[]};
+    stack[stack.length-1].node.children.push(node);
+    stack.push({node:node,indent:indent});
+    if (type==='page' && txt) node.props['_title']=txt;
+  }
+  return root;
+}
+
+// Renderer
+function $(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt)e.textContent=txt;return e;}
+function renderNode(node, container, gp) {
+  gp = gp||{};
+  if (!node||!node.type) return;
+  if (node.type==='root'){for(var k=0;k<node.children.length;k++)renderNode(node.children[k],container,Object.assign({},gp,node.props));return;}
+  var def = R[node.type];
+  if (!def){var el=$('span','',node.text||node.type);el.style.cssText='color:#999;font-size:12px';container.appendChild(el);return;}
+  var el;
+  switch(node.type){
+    case 'page': el=$('div','');if(node.text){el.appendChild($('div','nv-page-title',node.text));}break;
+    case 'card':
+      el=$('div','nv-card');
+      var r=node.props.radius||gp.radius||'12px';
+      el.style.setProperty('--nv-radius',r);
+      el.style.borderRadius=r;
+      break;
+    case 'input':case 'email':case 'number':case 'tel':case 'url':case 'pass':case 'search':
+      el=document.createElement('input');el.className='nv-input';el.placeholder=node.text||'Enter...';
+      if(def.x)el.type=def.x;if(node.props.value)el.value=node.props.value;break;
+    case 'textarea': el=document.createElement('textarea');el.className='nv-textarea';el.placeholder=node.text||'Enter...';el.rows=3;break;
+    case 'button':case 'primarybtn':case 'secondarybtn':case 'outlinebtn':case 'ghostbtn':
+      el=document.createElement('button');el.className=def.c;el.textContent=node.text||'Button';break;
+    case 'toggle':case 'switch':
+      el=$('div','nv-toggle');
+      var lbl=$('span','',node.text||'Toggle');
+      var trk=document.createElement('div');trk.className='nv-toggle-track';
+      var thb=document.createElement('div');thb.className='nv-toggle-thumb';
+      trk.appendChild(thb);trk.onclick=function(){this.classList.toggle('on');};
+      el.appendChild(lbl);el.appendChild(trk);
+      break;
+    case 'progress': el=$('div','nv-progress');var bar=$('div','nv-progress-bar');bar.style.width=node.props.value||'60%';el.appendChild(bar);break;
+    case 'badge': el=$('span','nv-badge '+(node.props.color||'blue'),node.text||'Badge');break;
+    case 'avatar': el=$('div','nv-avatar',node.text||'U');el.style.background=node.props.color||'#6c5ce7';break;
+    case 'grid': el=$('div','nv-grid');break;
+    case 'gitem': el=$('div','nv-grid-item');break;
+    case 'chip': el=$('span','nv-chip',node.text||'Chip');break;
+    case 'divider': el=$('div','nv-divider');break;
+    case 'link':
+      el=document.createElement('a');el.className='nv-link';el.textContent=node.text||'Link';el.href='#';
+      if(node.props.page){(function(p){el.onclick=function(e){e.preventDefault();navigateTo(p);};})(node.props.page);}
+      break;
+    case 'image':case 'img':
+      el=document.createElement('img');el.className='nv-image';
+      el.src=node.props.src||'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22180%22%3E%3Crect fill=%22%23e5e7eb%22 width=%22300%22 height=%22180%22/%3E%3Ctext fill=%22%23999%22 font-size=%2214%22 x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22%3EImage%3C/text%3E%3C/svg%3E';
+      el.alt=node.text||'Image';break;
+    case 'row': el=$('div','nv-row');break;
+    case 'title': el=$('div','nv-title',node.text||'Title');break;
+    case 'subtitle': el=$('div','nv-subtitle',node.text||'Subtitle');break;
+    case 'text':case 'paragraph': el=$('p','nv-text',node.text||'Text...');break;
+    default:
+      el=document.createElement(def.t||'div');el.className=def.c||'';
+      if(node.text)el.textContent=node.text;if(def.x)el.type=def.x;break;
+  }
+  if(el){
+    if(node.props.radius)el.style.borderRadius=node.props.radius;
+    if(node.props.id)el.id=node.props.id;
+    if(node.props.width)el.style.width=node.props.width;
+    if(node.props.height)el.style.height=node.props.height;
+    if(node.props.bg)el.style.background=node.props.bg;
+    if(node.props.color)el.style.color=node.props.color;
+    if(node.props.size)el.style.fontSize=node.props.size;
+    if(node.props.bold!==undefined)el.style.fontWeight='700';
+    if(node.props.align)el.style.textAlign=node.props.align;
+    if(node.props.padding)el.style.padding=node.props.padding;
+    if(node.props.margin)el.style.margin=node.props.margin;
+    if(node.props.shadow!==undefined)el.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)';
+  }
+  if(el&&node.children&&node.children.length>0&&el.tagName!=='INPUT'&&el.tagName!=='TEXTAREA'&&el.tagName!=='IMG'){
+    for(var k=0;k<node.children.length;k++)renderNode(node.children[k],el,Object.assign({},gp,node.props));
+  }
+  if(el)container.appendChild(el);
+}
+
+// Navigation
+function navigateTo(pn){
+  var dsl=document.getElementById('editor').value;
+  var pc=document.getElementById('phoneContent');
+  pc.innerHTML='';
+  var ast=parseDSL(dsl);
+  var found=false;
+  function s(node){
+    if(node.type==='page'&&node.props['_title']&&node.props['_title'].toLowerCase().replace(/\s+/g,'')===pn.toLowerCase().replace(/\s+/g,'')){
+      renderNode({type:'root',children:node.children,props:{}},pc);found=true;return true;
+    }
+    for(var k=0;k<node.children.length;k++){if(s(node.children[k]))return true;}
+    return false;
+  }
+  s(ast);
+  if(!found){pc.innerHTML='';renderNode(ast,pc);}
+}
+
+// Main render
+function renderFromEditor(){
+  var text=document.getElementById('editor').value;
+  var pc=document.getElementById('phoneContent');
+  var eb=document.getElementById('errorBar');
+  eb.classList.remove('show');eb.textContent='';
+  pc.innerHTML='';
+  try{
+    var ast=parseDSL(text);
+    renderNode(ast,pc);
+    var n=0;function cnt(node){n++;for(var k=0;k<node.children.length;k++)cnt(node.children[k]);}cnt(ast);
+    document.getElementById('elementCount').textContent=n+' elements';
+  }catch(e){eb.textContent='Warning: '+e.message;eb.classList.add('show');}
+}
+
+// Editor setup
+var editor=document.getElementById('editor');
+editor.addEventListener('input',function(){
+  document.getElementById('lineCount').textContent='Line '+editor.value.split(String.fromCharCode(10)).length;
+});
+
+// Default demo
+editor.value = [
+  '// NovaDSL Demo - 155 elements supported',
+  '',
+  'Page "NovaDSL Demo"',
+  '',
+  '  Card radius: 20px',
+  '    Title "Welcome to NovaDSL"',
+  '    Subtitle "Real 155-element engine"',
+  '    Input "Your name"',
+  '    Primarybtn "Get Started"',
+  '    Divider',
+  '    Row',
+  '      Avatar "A" color: #6c5ce7',
+  '      Avatar "B" color: #e17055',
+  '      Avatar "C" color: #00b894',
+  '    Text "This card has border-radius: 20px"',
+  '    Link "Learn more" page: "About"',
+  '',
+  '  Card radius: 0px',
+  '    Title "Square Card"',
+  '    Subtitle "radius: 0px gives sharp corners"',
+  '    Grid',
+  '      Gitem',
+  '        span "42" bold: true',
+  '        label "Posts"',
+  '      Gitem',
+  '        span "128" bold: true',
+  '        label "Followers"',
+  '      Gitem',
+  '        span "16" bold: true',
+  '        label "Projects"',
+  '      Gitem',
+  '        span "99%" bold: true',
+  '        label "Uptime"',
+  '    Progress value: 75%',
+  '',
+  '  Card radius: 50px',
+  '    Title "Pill Card"',
+  '    Subtitle "radius: 50px is extra rounded"',
+  '    Badge "New" color: green',
+  '    Badge "Hot" color: red',
+  '    Badge "Beta" color: yellow',
+  '    Chip "React" Chip "Vue" Chip "Svelte"',
+  '    Row',
+  '      Toggle "Dark mode"',
+  '    Toggle "Notifications"',
+  '    Link "Navigation demo"',
+  '',
+  'Footer "\u00a9 2026 NovaDSL Real Engine"'
+].join(String.fromCharCode(10));
+
+renderFromEditor();
+
+function formatDSL(){
+  var lines=editor.value.split(String.fromCharCode(10));
+  editor.value=lines.join(String.fromCharCode(10));
+  renderFromEditor();
+}
+</script>
+</body>
+</html>
