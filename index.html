@@ -73,6 +73,46 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .nv-grid-item{background:#f9f9f9;border-radius:10px;padding:12px;text-align:center;border:1px solid #eee}
 .nv-grid-item span{display:block;font-size:20px;font-weight:600;color:#1a1a1a}
 .nv-grid-item label{font-size:11px;color:#888}
+
+/* Mobile tab switcher - hidden on desktop */
+.mobile-tabs{display:none}
+
+/* Desktop: side by side */
+@media(min-width:768px){
+  #app{flex-direction:row}
+  #editor-panel{width:50%;min-width:380px;border-right:1px solid var(--border);border-bottom:none}
+  #preview-panel{flex:1;display:flex;align-items:center;justify-content:center}
+  .phone-frame{width:375px;height:812px}
+}
+
+/* Mobile: stacked, full screen */
+@media(max-width:767px){
+  body{height:auto;min-height:100dvh;overflow-y:auto;overflow-x:hidden}
+  #app{flex-direction:column;height:auto;min-height:100dvh}
+  #editor-panel{width:100%;min-width:0;flex:none;height:auto;border-right:none;border-bottom:1px solid var(--border)}
+  #editor-panel.hidden{display:none}
+  #editor{min-height:50vh;max-height:70vh}
+  
+  #preview-panel{width:100%;flex:none;padding:12px;min-height:50vh}
+  #preview-panel.hidden{display:none}
+  
+  .phone-frame{width:100%;max-width:375px;height:auto;min-height:500px;padding:8px;border-radius:24px;margin:0 auto}
+  .phone-screen{border-radius:18px;min-height:484px}
+  .phone-notch{width:100px;height:20px;border-radius:0 0 12px 12px}
+  .phone-status{padding:10px 16px 4px;font-size:10px}
+  .phone-content{padding:2px 12px 16px}
+  
+  /* Mobile tab bar */
+  .mobile-tabs{display:flex;position:sticky;top:0;z-index:100;background:var(--surface);border-bottom:1px solid var(--border)}
+  .mobile-tabs button{flex:1;padding:12px 8px;border:none;background:transparent;color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;border-bottom:2px solid transparent}
+  .mobile-tabs button.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--bg)}
+  
+  .toolbar h1{font-size:11px}
+  .toolbar-actions button{padding:4px 8px;font-size:10px}
+  .editor-header{font-size:10px;padding:4px 12px}
+  #editor{font-size:12px;padding:12px}
+  .editor-footer{font-size:9px;padding:2px 12px}
+}
 </style>
 </head>
 <body>
@@ -80,6 +120,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 <div id="editor-panel">
 <div class="toolbar"><h1>Nova<span>DSL</span> Real Engine</h1>
 <div class="toolbar-actions"><button onclick="formatDSL()">Format</button><button class="run-btn" onclick="renderFromEditor()">&#9654; Run</button></div></div>
+<div class="mobile-tabs">
+  <button id="tabCode" class="active" onclick="switchMobileTab('code')">Code</button>
+  <button id="tabPreview" onclick="switchMobileTab('preview')">Preview</button>
+</div>
 <div class="editor-header"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span><span id="fileName">main.nova</span></div>
 <div id="errorBar" class="error-bar"></div>
 <textarea id="editor" spellcheck="false" placeholder="Write NovaDSL here..."></textarea>
@@ -371,6 +415,28 @@ function formatDSL(){
   editor.value=lines.join(String.fromCharCode(10));
   renderFromEditor();
 }
+function switchMobileTab(tab){
+  var ep=document.getElementById('editor-panel');
+  var pp=document.getElementById('preview-panel');
+  var tc=document.getElementById('tabCode');
+  var tp=document.getElementById('tabPreview');
+  if(window.innerWidth>767)return;
+  if(tab==='code'){
+    ep.classList.remove('hidden');pp.classList.add('hidden');
+    tc.classList.add('active');tp.classList.remove('active');
+  }else{
+    ep.classList.add('hidden');pp.classList.remove('hidden');
+    tc.classList.remove('active');tp.classList.add('active');
+    renderFromEditor();
+  }
+}
+// Auto-switch on resize
+window.addEventListener('resize',function(){
+  if(window.innerWidth>767){
+    document.getElementById('editor-panel').classList.remove('hidden');
+    document.getElementById('preview-panel').classList.remove('hidden');
+  }
+});
 </script>
 </body>
 </html>
