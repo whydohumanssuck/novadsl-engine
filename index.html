@@ -312,6 +312,8 @@ function renderNode(node, container, gp) {
     if(node.props.tap)el.style.webkitTapHighlightColor=node.props.tap;
     if(node.props.outline!==undefined)el.style.outline=node.props.outline;
     if(node.props.nofocus!==undefined){el.style.outline='none';el.style.boxShadow='none';}
+    if(node.props.style)el.style.cssText+=';'+node.props.style;
+    if(node.props.blur!==undefined)el.style.filter='blur('+node.props.blur+')';
     if(node.props.shadow!==undefined)el.style.boxShadow='0 4px 12px rgba(0,0,0,0.2),0 0 0 1px rgba(255,255,255,0.06)';
   }
   if(el&&node.children&&node.children.length>0&&el.tagName!=='INPUT'&&el.tagName!=='TEXTAREA'&&el.tagName!=='IMG'){
