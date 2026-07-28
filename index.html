@@ -309,7 +309,7 @@ function renderNode(node, container, gp) {
     if(node.props.align)el.style.textAlign=node.props.align;
     if(node.props.padding)el.style.padding=node.props.padding;
     if(node.props.margin)el.style.margin=node.props.margin;
-    if(node.props.shadow!==undefined)el.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)';
+    if(node.props.shadow!==undefined)el.style.boxShadow='0 4px 12px rgba(0,0,0,0.2),0 0 0 1px rgba(255,255,255,0.06)';
   }
   if(el&&node.children&&node.children.length>0&&el.tagName!=='INPUT'&&el.tagName!=='TEXTAREA'&&el.tagName!=='IMG'){
     for(var k=0;k<node.children.length;k++)renderNode(node.children[k],el,Object.assign({},gp,node.props));
