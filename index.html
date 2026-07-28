@@ -352,8 +352,19 @@ function renderFromEditor(){
 
 // Editor setup
 var editor=document.getElementById('editor');
+var renderTimer=null;
 editor.addEventListener('input',function(){
   document.getElementById('lineCount').textContent='Line '+editor.value.split(String.fromCharCode(10)).length;
+  // Debounced auto-render with 300ms delay
+  if(renderTimer)clearTimeout(renderTimer);
+  renderTimer=setTimeout(function(){
+    renderTimer=null;
+    // Only auto-render if preview is visible (mobile) or always on desktop
+    var pp=document.getElementById('preview-panel');
+    if(window.innerWidth>767||!pp.classList.contains('hidden')){
+      renderFromEditor();
+    }
+  },300);
 });
 
 // Default demo
