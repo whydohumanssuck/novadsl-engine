@@ -309,6 +309,9 @@ function renderNode(node, container, gp) {
     if(node.props.align)el.style.textAlign=node.props.align;
     if(node.props.padding)el.style.padding=node.props.padding;
     if(node.props.margin)el.style.margin=node.props.margin;
+    if(node.props.tap)el.style.webkitTapHighlightColor=node.props.tap;
+    if(node.props.outline!==undefined)el.style.outline=node.props.outline;
+    if(node.props.nofocus!==undefined){el.style.outline='none';el.style.boxShadow='none';}
     if(node.props.shadow!==undefined)el.style.boxShadow='0 4px 12px rgba(0,0,0,0.2),0 0 0 1px rgba(255,255,255,0.06)';
   }
   if(el&&node.children&&node.children.length>0&&el.tagName!=='INPUT'&&el.tagName!=='TEXTAREA'&&el.tagName!=='IMG'){
