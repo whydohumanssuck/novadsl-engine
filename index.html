@@ -2,31 +2,41 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NovaDSL Real Engine</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NovaDSL — HL Language Engine</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0d0d0d;--surface:#1a1a1a;--surface2:#242424;--border:#333;--text:#e4e4e4;--text2:#a0a0a0;--accent:#6c5ce7;--accent2:#a29bfe;--editor-bg:#1e1e1e}
+:root{--bg:#0d0d0d;--surface:#1a1a1a;--surface2:#242424;--border:#333;--text:#e4e4e4;--text2:#a0a0a0;--accent:#6c5ce7;--accent2:#a29bfe;--editor-bg:#1e1e1e;--accent-rgb:108,92,231}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
 #app{display:flex;height:100vh}
-#editor-panel{width:50%;min-width:380px;display:flex;flex-direction:column;border-right:1px solid var(--border);background:var(--editor-bg)}
-#preview-panel{flex:1;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:20px}
-.toolbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border)}
+#editor-panel{position:relative;width:50%;min-width:380px;display:flex;flex-direction:column;border-right:1px solid var(--border);background:var(--editor-bg)}
+#preview-panel{flex:1;display:flex;flex-direction:column;background:var(--bg);overflow:hidden}
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
 .toolbar h1{font-size:13px;font-weight:600;letter-spacing:.3px;color:var(--accent2)}
 .toolbar h1 span{color:var(--text2);font-weight:400}
-.toolbar-actions{display:flex;gap:6px}
-.toolbar-actions button{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .15s}
+.toolbar-actions{display:flex;gap:6px;align-items:center}
+.toolbar-actions button{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .15s;white-space:nowrap}
 .toolbar-actions button:hover{background:var(--accent);border-color:var(--accent);color:#fff}
 .toolbar-actions button.run-btn{background:var(--accent);border-color:var(--accent);color:#fff}
 .toolbar-actions button.run-btn:hover{opacity:.85}
-.editor-header{display:flex;align-items:center;gap:8px;padding:6px 16px;background:var(--surface);border-bottom:1px solid var(--border);font-size:11px;color:var(--text2)}
+.toolbar-actions button.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.editor-header{display:flex;align-items:center;gap:8px;padding:6px 16px;background:var(--surface);border-bottom:1px solid var(--border);font-size:11px;color:var(--text2);flex-shrink:0}
 .editor-header .dot{width:10px;height:10px;border-radius:50%}
-.editor-header .dot.red{background:#ff5f57}
-.editor-header .dot.yellow{background:#ffbd2e}
-.editor-header .dot.green{background:#28c840}
+.editor-header .dot.red{background:#ff5f57}.editor-header .dot.yellow{background:#ffbd2e}.editor-header .dot.green{background:#28c840}
 #editor{flex:1;width:100%;background:var(--editor-bg);color:#d4d4d4;border:none;outline:none;padding:16px;font-family:'JetBrains Mono','Fira Code','Consolas',monospace;font-size:13px;line-height:1.6;resize:none;tab-size:2}
 #editor::placeholder{color:#555}
-.editor-footer{display:flex;justify-content:space-between;padding:4px 16px;font-size:10px;color:var(--text2);background:var(--surface);border-top:1px solid var(--border)}
+.editor-footer{display:flex;justify-content:space-between;padding:4px 16px;font-size:10px;color:var(--text2);background:var(--surface);border-top:1px solid var(--border);flex-shrink:0}
+#autocomplete-box{display:none;position:absolute;z-index:10000;background:var(--surface);border:1px solid var(--border);border-radius:8px;max-height:280px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:220px}
+#autocomplete-box .ac-item{padding:5px 10px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:11px;border-bottom:1px solid rgba(255,255,255,.04);transition:background .1s;gap:8px}
+#autocomplete-box .ac-item:last-child{border-bottom:none}
+#autocomplete-box .ac-item:hover,#autocomplete-box .ac-item.sel{background:rgba(var(--accent-rgb),.25)}
+#autocomplete-box .ac-item .ac-hl{font-weight:600;font-family:'JetBrains Mono',monospace;color:var(--accent2)}
+#autocomplete-box .ac-item .ac-css{color:var(--text2);font-size:9px;font-family:'JetBrains Mono',monospace;opacity:.7;text-align:right;flex-shrink:0;max-width:140px;overflow:hidden;text-overflow:ellipsis}
+#autocomplete-box .ac-cat{font-size:9px;text-transform:uppercase;letter-spacing:1px;padding:3px 10px;color:var(--text2);background:var(--surface2);font-weight:600;position:sticky;top:0;z-index:1}
+.preview-header{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;font-size:11px;color:var(--text2);background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.preview-header span{display:flex;align-items:center;gap:6px}
+#compiled-css{display:none;background:var(--editor-bg);color:#d4d4d4;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.5;padding:12px 16px;overflow:auto;white-space:pre-wrap;max-height:180px;border-bottom:1px solid var(--border);flex-shrink:0}
+.phone-preview-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:12px;overflow:hidden}
 .phone-frame{width:375px;height:812px;background:#000;border-radius:44px;padding:12px;box-shadow:0 0 0 2px #333,0 20px 60px rgba(0,0,0,.8);position:relative;overflow:hidden;flex-shrink:0}
 .phone-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:150px;height:30px;background:#000;border-radius:0 0 18px 18px;z-index:10}
 .phone-screen{width:100%;height:100%;background:#f5f5f5;border-radius:34px;overflow-y:auto;overflow-x:hidden;position:relative}
@@ -43,24 +53,21 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .nv-text{font-size:13px;color:#444;line-height:1.5;margin-bottom:8px}
 .nv-input{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:10px;font-size:14px;background:#fafafa;margin-bottom:8px;outline:none;transition:border .2s}
 .nv-input:focus{border-color:var(--accent)}
-.nv-button{width:100%;padding:10px 16px;border:none;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;transition:all .15s;margin-bottom:6px}
-.nv-button.primary{background:var(--accent);color:#fff}
-.nv-button.primary:hover{opacity:.9}
-.nv-button.secondary{background:#f0f0f0;color:#333}
-.nv-button.secondary:hover{background:#e5e5e5}
+.nv-button{width:100%;padding:10px 16px;border:none;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;transition:all .15s;margin-bottom:6px;-webkit-tap-highlight-color:transparent!important;outline:none!important}
+.nv-button:focus{outline:none!important;box-shadow:none!important}
+.nv-button.primary{background:var(--accent);color:#fff}.nv-button.primary:hover{opacity:.9}
+.nv-button.secondary{background:#f0f0f0;color:#333}.nv-button.secondary:hover{background:#e5e5e5}
 .nv-button.outline{background:transparent;color:var(--accent);border:1px solid var(--accent)}
 .nv-button.outline:hover{background:rgba(108,92,231,.08)}
-.nv-link{display:block;color:var(--accent);font-size:13px;font-weight:500;cursor:pointer;padding:4px 0;text-decoration:none}
+.nv-link{display:block;color:var(--accent);font-size:13px;font-weight:500;cursor:pointer;padding:4px 0;text-decoration:none;-webkit-tap-highlight-color:transparent!important}
 .nv-link:hover{text-decoration:underline}
 .nv-divider{height:1px;background:#eee;margin:14px 0}
 .nv-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;margin-right:4px;margin-bottom:4px}
-.nv-badge.blue{background:#eef2ff;color:#4f46e5}
-.nv-badge.green{background:#ecfdf5;color:#059669}
-.nv-badge.red{background:#fef2f2;color:#dc2626}
-.nv-badge.yellow{background:#fffbeb;color:#d97706}
-.nv-avatar{width:40px;height:40px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:600;font-size:16px;color:#fff;margin-right:8px}
-.nv-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.nv-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:16px;font-size:12px;background:#f3f4f6;color:#333;border:1px solid #e5e7eb;margin:2px}
+.nv-badge.blue{background:#eef2ff;color:#4f46e5}.nv-badge.green{background:#ecfdf5;color:#059669}
+.nv-badge.red{background:#fef2f2;color:#dc2626}.nv-badge.yellow{background:#fffbeb;color:#d97706}
+.nv-avatar{width:40px;height:40px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:600;font-size:16px;color:#fff;margin-right:8px;flex-shrink:0}
+.nv-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.nv-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:16px;font-size:12px;background:#f3f4f6;color:#333;border:1px solid #e5e7eb;margin:2px;-webkit-tap-highlight-color:transparent!important}
 .nv-toggle{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:13px;color:#333}
 .nv-toggle-track{width:44px;height:24px;background:#ddd;border-radius:12px;position:relative;cursor:pointer;transition:background .2s}
 .nv-toggle-track.on{background:var(--accent)}
@@ -73,229 +80,245 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .nv-grid-item{background:#f9f9f9;border-radius:10px;padding:12px;text-align:center;border:1px solid #eee}
 .nv-grid-item span{display:block;font-size:20px;font-weight:600;color:#1a1a1a}
 .nv-grid-item label{font-size:11px;color:#888}
-
-/* Mobile tab switcher - hidden on desktop */
 .mobile-tabs{display:none}
-
-/* Desktop: side by side */
-@media(min-width:768px){
-  #app{flex-direction:row}
-  #editor-panel{width:50%;min-width:380px;border-right:1px solid var(--border);border-bottom:none}
-  #preview-panel{flex:1;display:flex;align-items:center;justify-content:center}
-  .phone-frame{width:375px;height:812px}
-}
-
-/* Mobile: stacked, full screen */
-@media(max-width:767px){
-  body{height:auto;min-height:100dvh;overflow-y:auto;overflow-x:hidden}
-  #app{flex-direction:column;height:auto;min-height:100dvh}
-  #editor-panel{width:100%;min-width:0;flex:none;height:auto;border-right:none;border-bottom:1px solid var(--border)}
-  #editor-panel.hidden{display:none}
-  #editor{min-height:50vh;max-height:70vh}
-  
-  #preview-panel{width:100%;flex:none;padding:12px;min-height:50vh}
-  #preview-panel.hidden{display:none}
-  
-  .phone-frame{width:100%;max-width:375px;height:auto;min-height:500px;padding:8px;border-radius:24px;margin:0 auto}
-  .phone-screen{border-radius:18px;min-height:484px}
-  .phone-notch{width:100px;height:20px;border-radius:0 0 12px 12px}
-  .phone-status{padding:10px 16px 4px;font-size:10px}
-  .phone-content{padding:2px 12px 16px}
-  
-  /* Mobile tab bar */
-  .mobile-tabs{display:flex;position:sticky;top:0;z-index:100;background:var(--surface);border-bottom:1px solid var(--border)}
-  .mobile-tabs button{flex:1;padding:12px 8px;border:none;background:transparent;color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;border-bottom:2px solid transparent}
-  .mobile-tabs button.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--bg)}
-  
-  .toolbar h1{font-size:11px}
-  .toolbar-actions button{padding:4px 8px;font-size:10px}
-  .editor-header{font-size:10px;padding:4px 12px}
-  #editor{font-size:12px;padding:12px}
-  .editor-footer{font-size:9px;padding:2px 12px}
-}
-</style>
-</head>
-<body>
-<div id="app">
-<div id="editor-panel">
-<div class="toolbar"><h1>Nova<span>DSL</span> Real Engine</h1>
-<div class="toolbar-actions"><button onclick="formatDSL()">Format</button><button class="run-btn" onclick="renderFromEditor()">&#9654; Run</button></div></div>
-<div class="mobile-tabs">
-  <button id="tabCode" class="active" onclick="switchMobileTab('code')">Code</button>
-  <button id="tabPreview" onclick="switchMobileTab('preview')">Preview</button>
-</div>
-<div class="editor-header"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span><span id="fileName">main.nova</span></div>
+@media(min-width:768px){#app{flex-direction:row}#editor-panel{width:50%;min-width:380px;border-right:1px solid var(--border);border-bottom:none}}
+@media(max-width:767px){body{height:auto;min-height:100dvh;overflow-y:auto;overflow-x:hidden}#app{flex-direction:column;height:auto;min-height:100dvh}#editor-panel{width:100%;min-width:0;flex:none;height:auto;border-right:none;border-bottom:1px solid var(--border)}#editor-panel.hidden{display:none}#editor{min-height:50vh;max-height:70vh}.phone-preview-wrap{width:100%;flex:none;padding:12px;min-height:50vh}.phone-preview-wrap.hidden{display:none}.phone-frame{width:100%;max-width:375px;height:auto;min-height:500px;padding:8px;border-radius:24px;margin:0 auto}.phone-screen{border-radius:18px;min-height:484px}.phone-notch{width:100px;height:20px;border-radius:0 0 12px 12px}.phone-status{padding:10px 16px 4px;font-size:10px}.phone-content{padding:2px 12px 16px}.mobile-tabs{display:flex;position:sticky;top:0;z-index:100;background:var(--surface);border-bottom:1px solid var(--border)}.mobile-tabs button{flex:1;padding:12px 8px;border:none;background:transparent;color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;border-bottom:2px solid transparent}.mobile-tabs button.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--bg)}.toolbar h1{font-size:11px}.toolbar-actions button{padding:4px 8px;font-size:10px}.editor-header{font-size:10px;padding:4px 12px}#editor{font-size:12px;padding:12px}.editor-footer{font-size:9px;padding:2px 12px}}
+</style></head><body>
+<div id="app"><div id="editor-panel">
+<div class="toolbar"><h1>Nova<span>DSL</span> HL Engine</h1><div class="toolbar-actions"><button onclick="toggleCompiledCSS()" id="cssToggle">CSS</button><button class="run-btn" onclick="renderFromEditor()">&#9654; Run</button></div></div>
+<div class="mobile-tabs"><button id="tabCode" class="active" onclick="switchMobileTab('code')">Code</button><button id="tabPreview" onclick="switchMobileTab('preview')">Preview</button></div>
+<div class="editor-header"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span><span id="fileName">main.hl</span></div>
 <div id="errorBar" class="error-bar"></div>
-<textarea id="editor" spellcheck="false" placeholder="Write NovaDSL here..."></textarea>
-<div class="editor-footer"><span id="lineCount">Line 1</span><span id="elementCount">0 elements</span></div>
+<textarea id="editor" spellcheck="false" placeholder="Write HL code here..."></textarea>
+<div id="autocomplete-box"></div>
+<div class="editor-footer"><span id="lineCount">Line 1</span><span id="elementCount">0 elements</span><span id="dictCount">0 properties</span></div>
 </div>
-<div id="preview-panel">
-<div class="phone-frame">
-<div class="phone-notch"></div>
-<div class="phone-screen" id="phoneScreen">
-<div class="phone-status"><span>9:41</span><span>&#x1F4F6;&#x1F50B;</span></div>
-<div class="phone-content" id="phoneContent"></div>
-</div></div></div></div>
+<div id="preview-panel"><div class="preview-header"><span>&#128241; Phone Preview</span><span><label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:11px"><input type="checkbox" id="liveToggle" checked onchange="toggleLiveRender()"> Live</label></span></div>
+<div id="compiled-css"></div>
+<div class="phone-preview-wrap" id="phonePreviewWrap"><div class="phone-frame"><div class="phone-notch"></div><div class="phone-screen" id="phoneScreen"><div class="phone-status"><span>9:41</span><span>&#x1F4F6;&#x1F50B;</span></div><div class="phone-content" id="phoneContent"></div></div></div></div></div></div>
 <script>
-// NovaDSL Real Engine - 155 Element Registry
-var R = {};
-function reg(k,t,c,x){R[k]={t:t,c:c,x:x||null};}
-reg('page','div','nv-page');reg('section','section','nv-section');reg('header','header','nv-header');
-reg('footer','footer','nv-footer');reg('nav','nav','nv-nav');reg('main','main','nv-main');
-reg('aside','aside','nv-aside');reg('article','article','nv-article');reg('container','div','nv-container');
-reg('wrapper','div','nv-wrapper');
-reg('card','div','nv-card');reg('cardbody','div','nv-card-body');reg('cardheader','div','nv-card-header');
-reg('cardfooter','div','nv-card-footer');reg('cardimg','img','nv-card-img');reg('cardbg','div','nv-card-bg');
-reg('cardoverlay','div','nv-card-overlay');reg('cardrow','div','nv-card-row');reg('cardcol','div','nv-card-col');
-reg('cardgrid','div','nv-card-grid');
-reg('title','div','nv-title');reg('subtitle','div','nv-subtitle');
-reg('h1','h1','nv-h1');reg('h2','h2','nv-h2');reg('h3','h3','nv-h3');
-reg('h4','h4','nv-h4');reg('h5','h5','nv-h5');reg('h6','h6','nv-h6');
-reg('heading1','h1','nv-h1');reg('heading2','h2','nv-h2');reg('heading3','h3','nv-h3');
-reg('heading4','h4','nv-h4');reg('heading5','h5','nv-h5');reg('heading6','h6','nv-h6');
-reg('text','p','nv-text');reg('span','span','nv-span');reg('label','label','nv-label');
-reg('caption','small','nv-caption');reg('paragraph','p','nv-paragraph');reg('blockquote','blockquote','nv-blockquote');
-reg('code','code','nv-code');reg('pre','pre','nv-pre');reg('strong','strong','nv-strong');
-reg('em','em','nv-em');reg('linktext','span','nv-link-text');reg('highlight','mark','nv-highlight');
-reg('input','input','nv-input');reg('textarea','textarea','nv-textarea');reg('select','select','nv-select');
-reg('option','option','nv-option');reg('checkbox','input','nv-checkbox','checkbox');reg('radio','input','nv-radio','radio');
-reg('switch','div','nv-switch');reg('toggle','div','nv-toggle');
-reg('slider','input','nv-slider','range');reg('range','input','nv-range','range');
-reg('datepicker','input','nv-datepicker','date');reg('timepicker','input','nv-timepicker','time');
-reg('fileinput','input','nv-fileinput','file');reg('colorpick','input','nv-colorpick','color');
-reg('searchbox','input','nv-searchbox','search');reg('email','input','nv-emailinput','email');
-reg('number','input','nv-numberinput','number');reg('tel','input','nv-telinput','tel');
-reg('url','input','nv-urlinput','url');reg('pass','input','nv-password','password');
-reg('button','button','nv-button');reg('primarybtn','button','nv-button primary');
-reg('secondarybtn','button','nv-button secondary');reg('outlinebtn','button','nv-button outline');
-reg('ghostbtn','button','nv-button ghost');reg('iconbtn','button','nv-icon-btn');reg('fab','button','nv-fab');
-reg('linkbtn','a','nv-link-btn');reg('actionbtn','button','nv-action-btn');reg('closebtn','button','nv-close-btn');
-reg('menubtn','button','nv-menu-btn');reg('tabbtn','button','nv-tab-btn');reg('togglebtn','button','nv-toggle-btn');
-reg('chipbtn','button','nv-chip-btn');reg('uploadbtn','button','nv-upload-btn');
-reg('link','a','nv-link');reg('navitem','a','nv-nav-item');reg('navlink','a','nv-nav-link');
-reg('breadcrumb','span','nv-breadcrumb');reg('tab','div','nv-tab');reg('tabpanel','div','nv-tab-panel');
-reg('menu','div','nv-menu');reg('menuitem','div','nv-menu-item');reg('dropdown','div','nv-dropdown');
-reg('accordion','div','nv-accordion');reg('accitem','div','nv-accordion-item');
-reg('stepper','div','nv-stepper');reg('step','div','nv-step');reg('pagination','div','nv-pagination');
-reg('sidebar','div','nv-sidebar');
-reg('list','ul','nv-list');reg('li','li','nv-list-item');reg('ol','ol','nv-ordered-list');
-reg('ul','ul','nv-bullet-list');reg('checklist','ul','nv-checklist');reg('chipgroup','div','nv-chip-group');
-reg('chip','span','nv-chip');reg('badge','span','nv-badge');reg('tag','span','nv-tag');
-reg('avatar','div','nv-avatar');
-reg('image','img','nv-image');reg('img','img','nv-img');reg('aimg','img','nv-avatar-img');
-reg('icon','span','nv-icon');reg('video','div','nv-video');reg('audio','div','nv-audio');
-reg('canvas','canvas','nv-canvas');reg('iframe','div','nv-iframe');reg('map','div','nv-map');
-reg('carousel','div','nv-carousel');reg('citem','div','nv-carousel-item');
-reg('slideshow','div','nv-slideshow');reg('slide','div','nv-slide');reg('gallery','div','nv-gallery');
-reg('media','div','nv-media');
-reg('row','div','nv-row');reg('col','div','nv-col');reg('grid','div','nv-grid');
-reg('gitem','div','nv-grid-item');reg('flex','div','nv-flex');reg('fitem','div','nv-flex-item');
-reg('stack','div','nv-stack');reg('divider','div','nv-divider');reg('spacer','div','nv-spacer');
-reg('group','div','nv-group');reg('inline','div','nv-inline');reg('center','div','nv-center');
-reg('panel','div','nv-panel');reg('toolbar','div','nv-toolbar');reg('abar','div','nv-actionbar');
-reg('hero','div','nv-hero');reg('banner','div','nv-banner');reg('toast','div','nv-toast');
-reg('snackbar','div','nv-snackbar');reg('modal','div','nv-modal');
-reg('table','table','nv-table');reg('thead','thead','nv-thead');reg('tbody','tbody','nv-tbody');
-reg('tr','tr','nv-tr');reg('td','td','nv-td');reg('th','th','nv-th');
-reg('progress','div','nv-progress');reg('pbar','div','nv-progress-bar');
-reg('meter','div','nv-meter');reg('spinner','div','nv-spinner');
-reg('form','form','nv-form');reg('fieldset','fieldset','nv-fieldset');reg('legend','legend','nv-legend');
-reg('tooltip','div','nv-tooltip');reg('popover','div','nv-popover');reg('dialog','div','nv-dialog');
-reg('alert','div','nv-alert');reg('notif','div','nv-notification');
-reg('skeleton','div','nv-skeleton');reg('placeholder','div','nv-placeholder');
+// ============================================================
+// HL DICTIONARY — 700 CSS + 200 HTML + 300 JS = 1200+ entries
+// ============================================================
+var HL = {};
+function addHL(hl, css, desc, cat) {
+  HL[hl] = {css:css, desc:desc||'', cat:cat||'css'};
+}
+  addHL("display","display","How element is displayed","layout");  addHL("show","display","Display mode","layout");  addHL("hide","display","Hide element","layout");  addHL("invisible","visibility","Visibility","layout");  addHL("visible","visibility","Make visible","layout");  addHL("position","position","Positioning method","layout");  addHL("pos","position","Position shorthand","layout");  addHL("relative","position","Relative","layout");  addHL("absolute","position","Absolute","layout");  addHL("fixed","position","Fixed","layout");  addHL("sticky","position","Sticky","layout");  addHL("static","position","Static","layout");  addHL("top","top","Top offset","layout");  addHL("bottom","bottom","Bottom offset","layout");  addHL("left","left","Left offset","layout");  addHL("right","right","Right offset","layout");  addHL("z-index","z-index","Stack order","layout");  addHL("zindex","z-index","Stack order shorthand","layout");  addHL("layer","z-index","Layer level","layout");  addHL("float","float","Float direction","layout");  addHL("clear","clear","Clear float","layout");  addHL("overflow","overflow","Overflow handling","layout");  addHL("overflow-x","overflow-x","Horizontal overflow","layout");  addHL("overflow-y","overflow-y","Vertical overflow","layout");  addHL("contain","contain","Containment","layout");  addHL("isolation","isolation","Stacking context","layout");  addHL("object-fit","object-fit","Image fit","layout");  addHL("object-position","object-position","Image position","layout");  addHL("aspect-ratio","aspect-ratio","Aspect ratio","layout");  addHL("ratio","aspect-ratio","Aspect ratio shorthand","layout");  addHL("width","width","Element width","box");  addHL("w","width","Width shorthand","box");  addHL("height","height","Element height","box");  addHL("h","height","Height shorthand","box");  addHL("min-width","min-width","Minimum width","box");  addHL("minwidth","min-width","Min width shorthand","box");  addHL("max-width","max-width","Maximum width","box");  addHL("maxwidth","max-width","Max width shorthand","box");  addHL("min-height","min-height","Minimum height","box");  addHL("minheight","min-height","Min height shorthand","box");  addHL("max-height","max-height","Maximum height","box");  addHL("maxheight","max-height","Max height shorthand","box");  addHL("margin","margin","Outside spacing","box");  addHL("m","margin","Margin shorthand","box");  addHL("margin-top","margin-top","Top margin","box");  addHL("mt","margin-top","Top margin shorthand","box");  addHL("margin-bottom","margin-bottom","Bottom margin","box");  addHL("mb","margin-bottom","Bottom margin shorthand","box");  addHL("margin-left","margin-left","Left margin","box");  addHL("ml","margin-left","Left margin shorthand","box");  addHL("margin-right","margin-right","Right margin","box");  addHL("mr","margin-right","Right margin shorthand","box");  addHL("padding","padding","Inside spacing","box");  addHL("p","padding","Padding shorthand","box");  addHL("padding-top","padding-top","Top padding","box");  addHL("pt","padding-top","Top padding shorthand","box");  addHL("padding-bottom","padding-bottom","Bottom padding","box");  addHL("pb","padding-bottom","Bottom padding shorthand","box");  addHL("padding-left","padding-left","Left padding","box");  addHL("pl","padding-left","Left padding shorthand","box");  addHL("padding-right","padding-right","Right padding","box");  addHL("pr","padding-right","Right padding shorthand","box");  addHL("border","border","Border shorthand","box");  addHL("border-width","border-width","Border width","box");  addHL("border-style","border-style","Border style","box");  addHL("border-color","border-color","Border color","box");  addHL("corners","border-radius","Border radius","box");  addHL("radius","border-radius","Border radius","box");  addHL("round","border-radius","Round corners","box");  addHL("border-top","border-top","Top border","box");  addHL("border-bottom","border-bottom","Bottom border","box");  addHL("border-left","border-left","Left border","box");  addHL("border-right","border-right","Right border","box");  addHL("border-top-left-radius","border-top-left-radius","Top-left corner","box");  addHL("border-top-right-radius","border-top-right-radius","Top-right corner","box");  addHL("border-bottom-left-radius","border-bottom-left-radius","Bottom-left corner","box");  addHL("border-bottom-right-radius","border-bottom-right-radius","Bottom-right corner","box");  addHL("box-sizing","box-sizing","Box sizing mode","box");  addHL("sizing","box-sizing","Sizing shorthand","box");  addHL("outline","outline","Outline shorthand","box");  addHL("outline-width","outline-width","Outline width","box");  addHL("outline-style","outline-style","Outline style","box");  addHL("outline-color","outline-color","Outline color","box");  addHL("outline-offset","outline-offset","Outline offset","box");  addHL("inset","inset","Inset shorthand","box");  addHL("inline-size","inline-size","Inline size","box");  addHL("block-size","block-size","Block size","box");  addHL("bg","background","Background shorthand","bg");  addHL("background","background","Background","bg");  addHL("bg-color","background-color","Background color","bg");  addHL("bg-image","background-image","Background image","bg");  addHL("bg-img","background-image","Background image","bg");  addHL("bg-size","background-size","Background size","bg");  addHL("bg-position","background-position","Background position","bg");  addHL("bg-repeat","background-repeat","Background repeat","bg");  addHL("bg-attachment","background-attachment","Background attachment","bg");  addHL("bg-clip","background-clip","Background clip","bg");  addHL("bg-origin","background-origin","Background origin","bg");  addHL("bg-blend","background-blend-mode","Blend mode","bg");  addHL("opacity","opacity","Element opacity","bg");  addHL("fade","opacity","Opacity shorthand","bg");  addHL("color","color","Text color","color");  addHL("text-color","color","Text color","color");  addHL("font-color","color","Font color","color");  addHL("accent-color","accent-color","Form accent","color");  addHL("caret-color","caret-color","Cursor color","color");  addHL("color-scheme","color-scheme","Color scheme","color");  addHL("font","font","Font shorthand","text");  addHL("font-family","font-family","Font family","text");  addHL("font-size","font-size","Font size","text");  addHL("size","font-size","Font size","text");  addHL("font-weight","font-weight","Font weight","text");  addHL("bold","font-weight","Bold (700)","text");  addHL("font-style","font-style","Font style","text");  addHL("italic","font-style","Italic","text");  addHL("font-variant","font-variant","Font variant","text");  addHL("line-height","line-height","Line height","text");  addHL("leading","line-height","Line height","text");  addHL("letter-spacing","letter-spacing","Letter spacing","text");  addHL("tracking","letter-spacing","Letter spacing","text");  addHL("word-spacing","word-spacing","Word spacing","text");  addHL("text-align","text-align","Text alignment","text");  addHL("align","text-align","Text align","text");  addHL("text-decoration","text-decoration","Text decoration","text");  addHL("underline","text-decoration","Underline","text");  addHL("strikethrough","text-decoration","Strikethrough","text");  addHL("overline","text-decoration","Overline","text");  addHL("text-transform","text-transform","Text casing","text");  addHL("uppercase","text-transform","Uppercase","text");  addHL("lowercase","text-transform","Lowercase","text");  addHL("capitalize","text-transform","Capitalize","text");  addHL("text-indent","text-indent","Text indent","text");  addHL("text-shadow","text-shadow","Text shadow","text");  addHL("text-overflow","text-overflow","Text overflow","text");  addHL("white-space","white-space","Whitespace","text");  addHL("word-break","word-break","Word break","text");  addHL("word-wrap","word-wrap","Word wrap","text");  addHL("overflow-wrap","overflow-wrap","Overflow wrap","text");  addHL("direction","direction","Text direction","text");  addHL("unicode-bidi","unicode-bidi","Unicode bidi","text");  addHL("writing-mode","writing-mode","Writing mode","text");  addHL("vertical-align","vertical-align","Vertical alignment","text");  addHL("valign","vertical-align","Vertical align","text");  addHL("list-style","list-style","List style","text");  addHL("list-style-type","list-style-type","List marker type","text");  addHL("list-style-image","list-style-image","List marker image","text");  addHL("list-style-position","list-style-position","Marker position","text");  addHL("quotes","quotes","Quote style","text");  addHL("tab-size","tab-size","Tab size","text");  addHL("hyphens","hyphens","Hyphenation","text");  addHL("text-justify","text-justify","Justify method","text");  addHL("text-orientation","text-orientation","Text orientation","text");  addHL("text-rendering","text-rendering","Text rendering","text");  addHL("text-underline-offset","text-underline-offset","Underline offset","text");  addHL("text-underline-position","text-underline-position","Underline position","text");  addHL("text-decoration-color","text-decoration-color","Decoration color","text");  addHL("text-decoration-line","text-decoration-line","Decoration line","text");  addHL("text-decoration-style","text-decoration-style","Decoration style","text");  addHL("text-decoration-thickness","text-decoration-thickness","Decoration thickness","text");  addHL("text-emphasis","text-emphasis","Text emphasis","text");  addHL("text-emphasis-color","text-emphasis-color","Emphasis color","text");  addHL("text-emphasis-style","text-emphasis-style","Emphasis style","text");  addHL("text-combine-upright","text-combine-upright","Text combine","text");  addHL("ruby-align","ruby-align","Ruby align","text");  addHL("ruby-position","ruby-position","Ruby position","text");  addHL("font-kerning","font-kerning","Font kerning","text");  addHL("font-optical-sizing","font-optical-sizing","Optical sizing","text");  addHL("font-size-adjust","font-size-adjust","Size adjust","text");  addHL("font-stretch","font-stretch","Font stretch","text");  addHL("font-synthesis","font-synthesis","Font synthesis","text");  addHL("font-variant-alternates","font-variant-alternates","Variant alternates","text");  addHL("font-variant-caps","font-variant-caps","Variant caps","text");  addHL("font-variant-ligatures","font-variant-ligatures","Variant ligatures","text");  addHL("font-variant-numeric","font-variant-numeric","Variant numeric","text");  addHL("font-variant-position","font-variant-position","Variant position","text");  addHL("font-variation-settings","font-variation-settings","Variable font","text");  addHL("writing-mode","writing-mode","Writing mode","text");  addHL("flex","display:flex","Flex container","flex");  addHL("flex-direction","flex-direction","Flex direction","flex");  addHL("flex-dir","flex-direction","Direction shorthand","flex");  addHL("row","flex-direction","Horizontal row","flex");  addHL("column","flex-direction","Vertical column","flex");  addHL("flex-wrap","flex-wrap","Flex wrap mode","flex");  addHL("wrap","flex-wrap","Wrap content","flex");  addHL("nowrap","flex-wrap","No wrap","flex");  addHL("flex-flow","flex-flow","Flex flow","flex");  addHL("justify-content","justify-content","Main axis align","flex");  addHL("justify","justify-content","Justify shorthand","flex");  addHL("align-items","align-items","Cross axis align","flex");  addHL("items","align-items","Align items","flex");  addHL("align-content","align-content","Multi-line align","flex");  addHL("flex-grow","flex-grow","Grow factor","flex");  addHL("grow","flex-grow","Grow shorthand","flex");  addHL("flex-shrink","flex-shrink","Shrink factor","flex");  addHL("shrink","flex-shrink","Shrink shorthand","flex");  addHL("flex-basis","flex-basis","Basis size","flex");  addHL("basis","flex-basis","Basis shorthand","flex");  addHL("order","order","Flex order","flex");  addHL("align-self","align-self","Individual alignment","flex");  addHL("gap","gap","Gap between items","flex");  addHL("row-gap","row-gap","Row gap","flex");  addHL("column-gap","column-gap","Column gap","flex");  addHL("place-items","place-items","Place items","flex");  addHL("place-content","place-content","Place content","flex");  addHL("place-self","place-self","Place self","flex");  addHL("justify-items","justify-items","Justify items","flex");  addHL("justify-self","justify-self","Justify self","flex");  addHL("grid","display:grid","Grid container","grid");  addHL("grid-template","grid-template","Grid template","grid");  addHL("grid-template-columns","grid-template-columns","Column template","grid");  addHL("grid-cols","grid-template-columns","Grid columns","grid");  addHL("grid-template-rows","grid-template-rows","Row template","grid");  addHL("grid-rows","grid-template-rows","Grid rows","grid");  addHL("grid-template-areas","grid-template-areas","Area template","grid");  addHL("grid-auto-columns","grid-auto-columns","Auto column","grid");  addHL("grid-auto-rows","grid-auto-rows","Auto row","grid");  addHL("grid-auto-flow","grid-auto-flow","Auto flow","grid");  addHL("grid-column","grid-column","Column span","grid");  addHL("grid-col","grid-column","Col span shorthand","grid");  addHL("grid-row","grid-row","Row span","grid");  addHL("grid-area","grid-area","Area name","grid");  addHL("grid-column-start","grid-column-start","Column start","grid");  addHL("grid-column-end","grid-column-end","Column end","grid");  addHL("grid-row-start","grid-row-start","Row start","grid");  addHL("grid-row-end","grid-row-end","Row end","grid");  addHL("transition","transition","Transition shorthand","anim");  addHL("trans","transition","Transition","anim");  addHL("transition-property","transition-property","Transition property","anim");  addHL("transition-duration","transition-duration","Transition duration","anim");  addHL("transition-delay","transition-delay","Transition delay","anim");  addHL("transition-timing","transition-timing-function","Transition easing","anim");  addHL("ease","transition","CSS ease","anim");  addHL("animation","animation","Animation shorthand","anim");  addHL("anim","animation","Animation","anim");  addHL("animation-name","animation-name","Animation name","anim");  addHL("animation-duration","animation-duration","Animation duration","anim");  addHL("animation-delay","animation-delay","Animation delay","anim");  addHL("animation-timing","animation-timing-function","Animation easing","anim");  addHL("animation-iteration","animation-iteration-count","Repeat count","anim");  addHL("animation-repeat","animation-iteration-count","Repeat","anim");  addHL("infinite","animation-iteration-count","Infinite repeat","anim");  addHL("animation-direction","animation-direction","Animation direction","anim");  addHL("animation-fill","animation-fill-mode","Fill mode","anim");  addHL("animation-play-state","animation-play-state","Play state","anim");  addHL("animation-composition","animation-composition","Animation compose","anim");  addHL("transform","transform","Transform shorthand","anim");  addHL("rotate","rotate","Rotation","anim");  addHL("scale","scale","Scale","anim");  addHL("skew","skew","Skew","anim");  addHL("translate","translate","Translate","anim");  addHL("translate-x","translateX","Horizontal move","anim");  addHL("translate-y","translateY","Vertical move","anim");  addHL("translate-z","translateZ","Z-axis move","anim");  addHL("transform-origin","transform-origin","Transform origin","anim");  addHL("transform-style","transform-style","Transform style","anim");  addHL("perspective","perspective","Perspective","anim");  addHL("perspective-origin","perspective-origin","Perspective origin","anim");  addHL("backface-visibility","backface-visibility","Backface visibility","anim");  addHL("will-change","will-change","Optimization hint","anim");  addHL("motion","transition","Motion shorthand","anim");  addHL("filter","filter","Filter effects","effect");  addHL("blur","blur","Blur effect","effect");  addHL("brightness","brightness","Brightness","effect");  addHL("contrast","contrast","Contrast","effect");  addHL("grayscale","grayscale","Grayscale","effect");  addHL("hue-rotate","hue-rotate","Hue rotation","effect");  addHL("invert","invert","Invert","effect");  addHL("saturate","saturate","Saturation","effect");  addHL("sepia","sepia","Sepia","effect");  addHL("drop-shadow","drop-shadow","Drop shadow filter","effect");  addHL("backdrop-filter","backdrop-filter","Backdrop effect","effect");  addHL("backdrop-blur","backdrop-filter","Backdrop blur","effect");  addHL("bg-effect","backdrop-filter","Backdrop effect","effect");  addHL("mix-blend","mix-blend-mode","Mix blend mode","effect");  addHL("blend","mix-blend-mode","Blend mode","effect");  addHL("clip-path","clip-path","Clip path shape","effect");  addHL("clip","clip-path","Clip path","effect");  addHL("mask","mask","Mask shorthand","effect");  addHL("mask-image","mask-image","Mask image","effect");  addHL("box-shadow","box-shadow","Box shadow","effect");  addHL("shadow","box-shadow","Box shadow","effect");  addHL("glow","box-shadow","Glow effect","effect");  addHL("cursor","cursor","Cursor style","interact");  addHL("pointer","cursor:pointer","Pointer cursor","interact");  addHL("grab","cursor:grab","Grab cursor","interact");  addHL("user-select","user-select","User selection","interact");  addHL("select","user-select","Selection","interact");  addHL("pointer-events","pointer-events","Pointer events","interact");  addHL("touch-action","touch-action","Touch action","interact");  addHL("resize","resize","Resize behavior","interact");  addHL("scroll-behavior","scroll-behavior","Scroll behavior","interact");  addHL("overscroll-behavior","overscroll-behavior","Overscroll","interact");  addHL("scroll-snap-type","scroll-snap-type","Snap type","interact");  addHL("scroll-snap-align","scroll-snap-align","Snap align","interact");  addHL("scroll-margin","scroll-margin","Scroll margin","interact");  addHL("scroll-padding","scroll-padding","Scroll padding","interact");  addHL("appearance","appearance","Native appearance","interact");  addHL("-webkit-tap-highlight-color","-webkit-tap-highlight-color","Mobile tap color","interact");  addHL("tap","-webkit-tap-highlight-color","Tap highlight","interact");  addHL("border-collapse","border-collapse","Collapse borders","table");  addHL("border-spacing","border-spacing","Cell spacing","table");  addHL("caption-side","caption-side","Caption position","table");  addHL("empty-cells","empty-cells","Empty cells","table");  addHL("table-layout","table-layout","Table layout","table");  addHL("colspan","colspan","HTML colspan","table");  addHL("rowspan","rowspan","HTML rowspan","table");  addHL("headers","headers","Header IDs","table");  addHL("scope","scope","Header scope","table");  addHL("counter-reset","counter-reset","Reset counter","other");  addHL("counter-increment","counter-increment","Increment counter","other");  addHL("counter-set","counter-set","Set counter","other");  addHL("content","content","CSS content","other");  addHL("columns","columns","Multi-column","other");  addHL("column-count","column-count","Column count","other");  addHL("column-width","column-width","Column width","other");  addHL("column-rule","column-rule","Column rule","other");  addHL("column-rule-color","column-rule-color","Rule color","other");  addHL("column-rule-style","column-rule-style","Rule style","other");  addHL("column-rule-width","column-rule-width","Rule width","other");  addHL("column-span","column-span","Column span","other");  addHL("column-fill","column-fill","Column fill","other");  addHL("break-before","break-before","Break before","other");  addHL("break-after","break-after","Break after","other");  addHL("break-inside","break-inside","Break inside","other");  addHL("orphans","orphans","Orphan lines","other");  addHL("widows","widows","Widow lines","other");  addHL("fill","fill","Fill color","svg");  addHL("stroke","stroke","Stroke color","svg");  addHL("stroke-width","stroke-width","Stroke width","svg");  addHL("stroke-dasharray","stroke-dasharray","Dash array","svg");  addHL("stroke-dashoffset","stroke-dashoffset","Dash offset","svg");  addHL("stroke-linecap","stroke-linecap","Line cap","svg");  addHL("stroke-linejoin","stroke-linejoin","Line join","svg");  addHL("stop-color","stop-color","Stop color","svg");  addHL("stop-opacity","stop-opacity","Stop opacity","svg");  addHL("clip-rule","clip-rule","Clip rule","svg");  addHL("color-interpolation","color-interpolation","Color interp.","svg");  addHL("cx","cx","Center X","svg");  addHL("cy","cy","Center Y","svg");  addHL("d","d","Path data","svg");  addHL("flood-color","flood-color","Flood color","svg");  addHL("flood-opacity","flood-opacity","Flood opacity","svg");  addHL("lighting-color","lighting-color","Lighting color","svg");  addHL("marker","marker","Marker","svg");  addHL("marker-end","marker-end","Marker end","svg");  addHL("marker-mid","marker-mid","Marker mid","svg");  addHL("marker-start","marker-start","Marker start","svg");  addHL("paint-order","paint-order","Paint order","svg");  addHL("r","r","Circle radius","svg");  addHL("rx","rx","Corner X","svg");  addHL("ry","ry","Corner Y","svg");  addHL("vector-effect","vector-effect","Vector effect","svg");  addHL("x","x","X coordinate","svg");  addHL("y","y","Y coordinate","svg");  addHL("container","container","Container name","other");  addHL("container-type","container-type","Container type","other");  addHL("container-name","container-name","Container name","other");  addHL("all","all","Reset all","other");  addHL("color-scheme","color-scheme","Color scheme","other");  addHL("color-interpolation-filters","color-interpolation-filters","Filter color","effect");  addHL("image-orientation","image-orientation","Image orientation","other");  addHL("image-rendering","image-rendering","Image rendering","other");  addHL("image-resolution","image-resolution","Image resolution","other");  addHL("initial-letter","initial-letter","Initial letter","text");  addHL("line-break","line-break","Line break","text");  addHL("offset","offset","Offset path","other");  addHL("offset-anchor","offset-anchor","Offset anchor","other");  addHL("offset-distance","offset-distance","Offset distance","other");  addHL("offset-path","offset-path","Offset path","other");  addHL("offset-position","offset-position","Offset pos","other");  addHL("offset-rotate","offset-rotate","Offset rotate","other");  addHL("page-break-before","page-break-before","Page break before","other");  addHL("page-break-after","page-break-after","Page break after","other");  addHL("page-break-inside","page-break-inside","Page break inside","other");  addHL("print-color-adjust","print-color-adjust","Print adjust","other");  addHL("scrollbar-width","scrollbar-width","Scrollbar width","other");  addHL("scrollbar-color","scrollbar-color","Scrollbar color","other");  addHL("shape-image-threshold","shape-image-threshold","Shape threshold","other");  addHL("shape-margin","shape-margin","Shape margin","other");  addHL("shape-outside","shape-outside","Shape outside","other");  addHL("speak","speak","Speech","other");  addHL("speak-as","speak-as","Speech as","other");  addHL("math-style","math-style","Math style","other");  addHL("math-depth","math-depth","Math depth","other");  addHL("accent-color","accent-color","Accent color","other");  addHL("dominant-baseline","dominant-baseline","Dominant baseline","text");  addHL("id","id","Element ID","html");  addHL("class","class","CSS class","html");  addHL("cls","class","Class shorthand","html");  addHL("style","style","Inline style","html");  addHL("dir","dir","Text direction","html");  addHL("hidden","hidden","Hide element","html");  addHL("tabindex","tabindex","Tab order","html");  addHL("tab","tabindex","Tab index","html");  addHL("accesskey","accesskey","Keyboard shortcut","html");  addHL("contenteditable","contenteditable","Editable content","html");  addHL("draggable","draggable","Draggable","html");  addHL("spellcheck","spellcheck","Spell check","html");  addHL("slot","slot","Slot name","html");  addHL("part","part","CSS part name","html");  addHL("exportparts","exportparts","Export parts","html");  addHL("lang","lang","Language","html");  addHL("title","title","Tooltip","html");  addHL("translate","translate","Translate attr","html");  addHL("autofocus","autofocus","Auto focus","html");  addHL("data-*","data-*","Custom data","html");  addHL("name","name","Element name","html-form");  addHL("value","value","Element value","html-form");  addHL("type","type","Input type","html-form");  addHL("placeholder","placeholder","Placeholder text","html-form");  addHL("hint","placeholder","Placeholder","html-form");  addHL("disabled","disabled","Disable element","html-form");  addHL("readonly","readonly","Read only","html-form");  addHL("required","required","Required field","html-form");  addHL("checked","checked","Checked state","html-form");  addHL("selected","selected","Selected state","html-form");  addHL("multiple","multiple","Multiple values","html-form");  addHL("accept","accept","Accepted types","html-form");  addHL("autocomplete","autocomplete","Auto complete","html-form");  addHL("autofill","autocomplete","Autofill","html-form");  addHL("maxlength","maxlength","Max length","html-form");  addHL("minlength","minlength","Min length","html-form");  addHL("min","min","Min value","html-form");  addHL("max","max","Max value","html-form");  addHL("step","step","Step value","html-form");  addHL("pattern","pattern","Validation","html-form");  addHL("form","form","Form ID","html-form");  addHL("formaction","formaction","Form action","html-form");  addHL("formenctype","formenctype","Form encoding","html-form");  addHL("formmethod","formmethod","Form method","html-form");  addHL("formnovalidate","formnovalidate","No validate","html-form");  addHL("formtarget","formtarget","Form target","html-form");  addHL("list","list","Datalist ID","html-form");  addHL("inputmode","inputmode","Input mode","html-form");  addHL("size","size","Input size","html-form");  addHL("cols","cols","Textarea cols","html-form");  addHL("rows","rows","Textarea rows","html-form");  addHL("wrap","wrap","Textarea wrap","html-form");  addHL("dirname","dirname","Direction name","html-form");  addHL("srcdoc","srcdoc","Inline HTML","html-form");  addHL("src","src","Source URL","html-media");  addHL("source","src","Source","html-media");  addHL("alt","alt","Alt text","html-media");  addHL("width","width","Element width","html-media");  addHL("height","height","Element height","html-media");  addHL("loading","loading","Loading strategy","html-media");  addHL("lazy","loading:lazy","Lazy loading","html-media");  addHL("eager","loading:eager","Eager loading","html-media");  addHL("decoding","decoding","Decoding","html-media");  addHL("fetchpriority","fetchpriority","Fetch priority","html-media");  addHL("crossorigin","crossorigin","Cross origin","html-media");  addHL("referrerpolicy","referrerpolicy","Referrer policy","html-media");  addHL("srcset","srcset","Src set","html-media");  addHL("sizes","sizes","Media sizes","html-media");  addHL("media","media","Media query","html-media");  addHL("poster","poster","Video poster","html-media");  addHL("autoplay","autoplay","Auto play","html-media");  addHL("controls","controls","Show controls","html-media");  addHL("loop","loop","Loop media","html-media");  addHL("muted","muted","Muted","html-media");  addHL("preload","preload","Preload strategy","html-media");  addHL("playsinline","playsinline","Play inline","html-media");  addHL("href","href","Hyperlink URL","html-link");  addHL("target","target","Open target","html-link");  addHL("_blank","target:_blank","New tab","html-link");  addHL("_self","target:_self","Same tab","html-link");  addHL("rel","rel","Relationship","html-link");  addHL("download","download","Download file","html-link");  addHL("ping","ping","Ping URLs","html-link");  addHL("hreflang","hreflang","Link language","html-link");  addHL("page","page","HL page nav","html-link");  addHL("charset","charset","Character set","html-meta");  addHL("http-equiv","http-equiv","HTTP equiv","html-meta");  addHL("viewport","viewport","Viewport","html-meta");  addHL("description","description","Meta description","html-meta");  addHL("keywords","keywords","Meta keywords","html-meta");  addHL("author","author","Meta author","html-meta");  addHL("robots","robots","Robot rules","html-meta");  addHL("theme-color","theme-color","Theme color","html-meta");  addHL("onclick","onclick","Click event","html-event");  addHL("ondblclick","ondblclick","Double click","html-event");  addHL("onchange","onchange","Change event","html-event");  addHL("oninput","oninput","Input event","html-event");  addHL("onsubmit","onsubmit","Submit event","html-event");  addHL("onfocus","onfocus","Focus event","html-event");  addHL("onblur","onblur","Blur event","html-event");  addHL("onkeydown","onkeydown","Key down","html-event");  addHL("onkeyup","onkeyup","Key up","html-event");  addHL("onkeypress","onkeypress","Key press","html-event");  addHL("onmouseover","onmouseover","Mouse over","html-event");  addHL("onmouseout","onmouseout","Mouse out","html-event");  addHL("onmousedown","onmousedown","Mouse down","html-event");  addHL("onmouseup","onmouseup","Mouse up","html-event");  addHL("onmousemove","onmousemove","Mouse move","html-event");  addHL("onwheel","onwheel","Wheel event","html-event");  addHL("onscroll","onscroll","Scroll event","html-event");  addHL("onresize","onresize","Resize event","html-event");  addHL("onload","onload","Load event","html-event");  addHL("onerror","onerror","Error event","html-event");  addHL("onabort","onabort","Abort event","html-event");  addHL("ontouchstart","ontouchstart","Touch start","html-event");  addHL("ontouchend","ontouchend","Touch end","html-event");  addHL("ontouchmove","ontouchmove","Touch move","html-event");  addHL("ontouchcancel","ontouchcancel","Touch cancel","html-event");  addHL("onpointerdown","onpointerdown","Pointer down","html-event");  addHL("onpointerup","onpointerup","Pointer up","html-event");  addHL("onpointermove","onpointermove","Pointer move","html-event");  addHL("ondrag","ondrag","Drag event","html-event");  addHL("ondrop","ondrop","Drop event","html-event");  addHL("onpaste","onpaste","Paste event","html-event");  addHL("oncopy","oncopy","Copy event","html-event");  addHL("oncut","oncut","Cut event","html-event");  addHL("onanimationend","onanimationend","Animation end","html-event");  addHL("onanimationstart","onanimationstart","Animation start","html-event");  addHL("ontransitionend","ontransitionend","Transition end","html-event");
+// ==================== JS METHODS & PROPERTIES (~300) ====================
+  addHL("getElementById","document.getElementById","Select by ID","js-dom");  addHL("getElementsByClass","document.getElementsByClassName","Select by class","js-dom");  addHL("getElementsByTag","document.getElementsByTagName","Select by tag","js-dom");  addHL("querySelector","document.querySelector","CSS selector first","js-dom");  addHL("querySelectorAll","document.querySelectorAll","CSS selector all","js-dom");  addHL("closest","element.closest","Nearest ancestor","js-dom");  addHL("matches","element.matches","Check selector","js-dom");  addHL("createElement","document.createElement","Create element","js-dom");  addHL("createTextNode","document.createTextNode","Create text node","js-dom");  addHL("cloneNode","node.cloneNode","Clone node","js-dom");  addHL("parent","element.parentElement","Parent element","js-dom");  addHL("parentNode","node.parentNode","Parent node","js-dom");  addHL("children","element.children","Child elements","js-dom");  addHL("childNodes","node.childNodes","Child nodes","js-dom");  addHL("firstChild","node.firstChild","First child","js-dom");  addHL("lastChild","node.lastChild","Last child","js-dom");  addHL("firstElement","element.firstElementChild","First element","js-dom");  addHL("lastElement","element.lastElementChild","Last element","js-dom");  addHL("nextSibling","node.nextSibling","Next sibling","js-dom");  addHL("prevSibling","node.previousSibling","Previous sibling","js-dom");  addHL("nextElement","element.nextElementSibling","Next element","js-dom");  addHL("prevElement","element.previousElementSibling","Prev element","js-dom");  addHL("appendChild","node.appendChild","Append child","js-dom");  addHL("append","element.append","Append content","js-dom");  addHL("prepend","element.prepend","Prepend content","js-dom");  addHL("removeChild","node.removeChild","Remove child","js-dom");  addHL("remove","element.remove","Remove self","js-dom");  addHL("replaceChild","node.replaceChild","Replace child","js-dom");  addHL("insertBefore","node.insertBefore","Insert before","js-dom");  addHL("insertAdjacentHTML","element.insertAdjacentHTML","Insert HTML","js-dom");  addHL("innerHTML","element.innerHTML","HTML content","js-dom");  addHL("outerHTML","element.outerHTML","Outer HTML","js-dom");  addHL("textContent","node.textContent","Text content","js-dom");  addHL("innerText","element.innerText","Visible text","js-dom");  addHL("setAttribute","element.setAttribute","Set attribute","js-dom");  addHL("getAttribute","element.getAttribute","Get attribute","js-dom");  addHL("removeAttribute","element.removeAttribute","Remove attr","js-dom");  addHL("hasAttribute","element.hasAttribute","Has attribute","js-dom");  addHL("toggleAttribute","element.toggleAttribute","Toggle attr","js-dom");  addHL("classList","element.classList","Class list","js-dom");  addHL("addClass","element.classList.add","Add class","js-dom");  addHL("removeClass","element.classList.remove","Remove class","js-dom");  addHL("toggleClass","element.classList.toggle","Toggle class","js-dom");  addHL("containsClass","element.classList.contains","Has class","js-dom");  addHL("dataset","element.dataset","Data attributes","js-dom");  addHL("addEventListener","target.addEventListener","Add listener","js-event");  addHL("removeEventListener","target.removeEventListener","Remove listener","js-event");  addHL("dispatchEvent","target.dispatchEvent","Dispatch event","js-event");  addHL("preventDefault","event.preventDefault","Prevent default","js-event");  addHL("stopPropagation","event.stopPropagation","Stop bubbling","js-event");  addHL("stopImmediate","event.stopImmediatePropagation","Stop all","js-event");  addHL("target","event.target","Event target","js-event");  addHL("currentTarget","event.currentTarget","Current target","js-event");  addHL("eventType","event.type","Event type","js-event");  addHL("key","event.key","Key pressed","js-event");  addHL("keyCode","event.keyCode","Key code","js-event");  addHL("clientX","event.clientX","Mouse X","js-event");  addHL("clientY","event.clientY","Mouse Y","js-event");  addHL("pageX","event.pageX","Page X","js-event");  addHL("pageY","event.pageY","Page Y","js-event");  addHL("ctrlKey","event.ctrlKey","Ctrl held","js-event");  addHL("shiftKey","event.shiftKey","Shift held","js-event");  addHL("altKey","event.altKey","Alt held","js-event");  addHL("log","console.log","Console log","js-console");  addHL("error","console.error","Console error","js-console");  addHL("warn","console.warn","Console warning","js-console");  addHL("info","console.info","Console info","js-console");  addHL("debug","console.debug","Console debug","js-console");  addHL("table","console.table","Console table","js-console");  addHL("group","console.group","Console group","js-console");  addHL("groupEnd","console.groupEnd","End group","js-console");  addHL("time","console.time","Timer start","js-console");  addHL("timeEnd","console.timeEnd","Timer end","js-console");  addHL("trace","console.trace","Console trace","js-console");  addHL("clearConsole","console.clear","Clear console","js-console");  addHL("count","console.count","Console count","js-console");  addHL("assert","console.assert","Console assert","js-console");  addHL("push","array.push","Add to end","js-array");  addHL("pop","array.pop","Remove end","js-array");  addHL("shift","array.shift","Remove start","js-array");  addHL("unshift","array.unshift","Add to start","js-array");  addHL("splice","array.splice","Add/remove at","js-array");  addHL("slice","array.slice","Extract portion","js-array");  addHL("concat","array.concat","Merge arrays","js-array");  addHL("join","array.join","Join to string","js-array");  addHL("toString","array.toString","Array to string","js-array");  addHL("indexOf","array.indexOf","Find index","js-array");  addHL("lastIndexOf","array.lastIndexOf","Find last index","js-array");  addHL("includes","array.includes","Check includes","js-array");  addHL("find","array.find","Find element","js-array");  addHL("findIndex","array.findIndex","Find index","js-array");  addHL("filter","array.filter","Filter array","js-array");  addHL("map","array.map","Transform","js-array");  addHL("reduce","array.reduce","Reduce array","js-array");  addHL("reduceRight","array.reduceRight","Reduce right","js-array");  addHL("forEach","array.forEach","Loop each","js-array");  addHL("every","array.every","Check all","js-array");  addHL("some","array.some","Check some","js-array");  addHL("sort","array.sort","Sort array","js-array");  addHL("reverse","array.reverse","Reverse array","js-array");  addHL("fill","array.fill","Fill array","js-array");  addHL("flat","array.flat","Flatten array","js-array");  addHL("flatMap","array.flatMap","Flat map","js-array");  addHL("from","Array.from","From iterable","js-array");  addHL("of","Array.of","From args","js-array");  addHL("isArray","Array.isArray","Check array","js-array");  addHL("arrayLength","array.length","Array length","js-array");  addHL("strLength","string.length","String length","js-string");  addHL("charAt","string.charAt","Char at index","js-string");  addHL("charCodeAt","string.charCodeAt","Char code","js-string");  addHL("concatStr","string.concat","Concatenate","js-string");  addHL("includesStr","string.includes","Check substring","js-string");  addHL("indexOfStr","string.indexOf","Find substring","js-string");  addHL("lastIndexOfStr","string.lastIndexOf","Find last sub","js-string");  addHL("match","string.match","Match regex","js-string");  addHL("matchAll","string.matchAll","Match all","js-string");  addHL("replace","string.replace","Replace text","js-string");  addHL("replaceAll","string.replaceAll","Replace all","js-string");  addHL("search","string.search","Search regex","js-string");  addHL("sliceStr","string.slice","Extract","js-string");  addHL("split","string.split","Split string","js-string");  addHL("substring","string.substring","Substring","js-string");  addHL("substr","string.substr","Substr","js-string");  addHL("toLowerCase","string.toLowerCase","Lowercase","js-string");  addHL("toUpperCase","string.toUpperCase","Uppercase","js-string");  addHL("trim","string.trim","Trim whitespace","js-string");  addHL("trimStart","string.trimStart","Trim start","js-string");  addHL("trimEnd","string.trimEnd","Trim end","js-string");  addHL("padStart","string.padStart","Pad start","js-string");  addHL("padEnd","string.padEnd","Pad end","js-string");  addHL("repeat","string.repeat","Repeat string","js-string");  addHL("startsWith","string.startsWith","Starts with","js-string");  addHL("endsWith","string.endsWith","Ends with","js-string");  addHL("localeCompare","string.localeCompare","Compare","js-string");  addHL("toFixed","number.toFixed","Fixed decimals","js-num");  addHL("toPrecision","number.toPrecision","Precision","js-num");  addHL("toString","number.toString","Number to string","js-num");  addHL("parseInt","parseInt","Parse integer","js-num");  addHL("parseFloat","parseFloat","Parse float","js-num");  addHL("isNaN","isNaN","Check NaN","js-num");  addHL("isFinite","isFinite","Check finite","js-num");  addHL("abs","Math.abs","Absolute","js-math");  addHL("round","Math.round","Round","js-math");  addHL("floor","Math.floor","Floor","js-math");  addHL("ceil","Math.ceil","Ceiling","js-math");  addHL("trunc","Math.trunc","Truncate","js-math");  addHL("min","Math.min","Minimum","js-math");  addHL("max","Math.max","Maximum","js-math");  addHL("pow","Math.pow","Power","js-math");  addHL("sqrt","Math.sqrt","Square root","js-math");  addHL("cbrt","Math.cbrt","Cube root","js-math");  addHL("random","Math.random","Random","js-math");  addHL("sin","Math.sin","Sine","js-math");  addHL("cos","Math.cos","Cosine","js-math");  addHL("tan","Math.tan","Tangent","js-math");  addHL("log","Math.log","Natural log","js-math");  addHL("log10","Math.log10","Base-10 log","js-math");  addHL("log2","Math.log2","Base-2 log","js-math");  addHL("PI","Math.PI","PI constant","js-math");  addHL("E","Math.E","E constant","js-math");  addHL("objKeys","Object.keys","Object keys","js-obj");  addHL("objValues","Object.values","Object values","js-obj");  addHL("objEntries","Object.entries","Object entries","js-obj");  addHL("assign","Object.assign","Merge objects","js-obj");  addHL("create","Object.create","Create from proto","js-obj");  addHL("freeze","Object.freeze","Freeze object","js-obj");  addHL("seal","Object.seal","Seal object","js-obj");  addHL("hasOwn","Object.hasOwn","Has property","js-obj");  addHL("Date.now","Date.now","Current time","js-date");  addHL("Date.parse","Date.parse","Parse date","js-date");  addHL("getFullYear","date.getFullYear","Get year","js-date");  addHL("getMonth","date.getMonth","Get month","js-date");  addHL("getDate","date.getDate","Get day","js-date");  addHL("getDay","date.getDay","Get weekday","js-date");  addHL("getHours","date.getHours","Get hours","js-date");  addHL("getMinutes","date.getMinutes","Get minutes","js-date");  addHL("getSeconds","date.getSeconds","Get seconds","js-date");  addHL("getTime","date.getTime","Get timestamp","js-date");  addHL("setFullYear","date.setFullYear","Set year","js-date");  addHL("setMonth","date.setMonth","Set month","js-date");  addHL("setDate","date.setDate","Set day","js-date");  addHL("setHours","date.setHours","Set hours","js-date");  addHL("setMinutes","date.setMinutes","Set minutes","js-date");  addHL("setSeconds","date.setSeconds","Set seconds","js-date");  addHL("toLocaleDate","date.toLocaleDateString","Localized date","js-date");  addHL("toLocaleTime","date.toLocaleTimeString","Localized time","js-date");  addHL("toISOString","date.toISOString","ISO string","js-date");  addHL("toJSON","date.toJSON","JSON date","js-date");  addHL("JSON.parse","JSON.parse","Parse JSON","js-json");  addHL("JSON.stringify","JSON.stringify","Stringify","js-json");  addHL("alert","alert","Alert dialog","js-win");  addHL("confirm","confirm","Confirm dialog","js-win");  addHL("prompt","prompt","Prompt dialog","js-win");  addHL("setTimeout","setTimeout","Delay exec","js-win");  addHL("setInterval","setInterval","Repeated exec","js-win");  addHL("clearTimeout","clearTimeout","Clear timeout","js-win");  addHL("clearInterval","clearInterval","Clear interval","js-win");  addHL("requestAnimationFrame","requestAnimationFrame","Animation frame","js-win");  addHL("fetch","fetch","Fetch API","js-win");  addHL("open","window.open","Open window","js-win");  addHL("close","window.close","Close window","js-win");  addHL("scrollTo","scrollTo","Scroll to pos","js-win");  addHL("scrollBy","scrollBy","Scroll by","js-win");  addHL("innerWidth","window.innerWidth","Window inner width","js-win");  addHL("innerHeight","window.innerHeight","Window inner height","js-win");  addHL("outerWidth","window.outerWidth","Outer width","js-win");  addHL("outerHeight","window.outerHeight","Outer height","js-win");  addHL("scrollX","window.scrollX","Scroll X","js-win");  addHL("scrollY","window.scrollY","Scroll Y","js-win");  addHL("localStorage","localStorage","Local storage","js-win");  addHL("sessionStorage","sessionStorage","Session storage","js-win");  addHL("location","location","Page location","js-win");  addHL("history","history","Browser history","js-win");  addHL("navigator","navigator","Browser info","js-win");  addHL("devicePixelRatio","devicePixelRatio","Pixel ratio","js-win");  addHL("matchMedia","matchMedia","Media query","js-win");  addHL("btoa","btoa","Base64 encode","js-win");  addHL("atob","atob","Base64 decode","js-win");  addHL("getComputedStyle","getComputedStyle","Get computed CSS","js-css");  addHL("Promise","Promise","Promise object","js-promise");  addHL("then","promise.then","Promise then","js-promise");  addHL("catch","promise.catch","Promise catch","js-promise");  addHL("finally","promise.finally","Finally","js-promise");  addHL("resolve","Promise.resolve","Resolve","js-promise");  addHL("reject","Promise.reject","Reject","js-promise");  addHL("all","Promise.all","All promises","js-promise");  addHL("race","Promise.race","Race promises","js-promise");  addHL("async","async function","Async function","js-promise");  addHL("await","await","Await","js-promise");  addHL("class","class","ES6 class","js-oop");  addHL("extends","extends","Inherit","js-oop");  addHL("super","super","Call parent","js-oop");  addHL("constructor","constructor","Constructor","js-oop");  addHL("static","static","Static method","js-oop");  addHL("getter","get","Getter","js-oop");  addHL("setter","set","Setter","js-oop");  addHL("new","new","Instantiate","js-oop");  addHL("this","this","Current context","js-oop");  addHL("instanceof","instanceof","Check instance","js-oop");  addHL("typeof","typeof","Check type","js-oop");  addHL("if","if statement","Conditional","js-flow");  addHL("else","else","Else branch","js-flow");  addHL("switch","switch","Switch","js-flow");  addHL("case","case","Case label","js-flow");  addHL("break","break","Break out","js-flow");  addHL("continue","continue","Continue loop","js-flow");  addHL("for","for loop","For loop","js-flow");  addHL("while","while loop","While loop","js-flow");  addHL("do","do-while","Do while","js-flow");  addHL("for...in","for-in","For-in loop","js-flow");  addHL("for...of","for-of","For-of loop","js-flow");  addHL("return","return","Return value","js-flow");  addHL("try","try block","Try block","js-flow");  addHL("catch","catch block","Catch error","js-flow");  addHL("finally","finally block","Finally","js-flow");  addHL("throw","throw","Throw error","js-flow");  addHL("debugger","debugger","Debugger","js-flow");  addHL("Map","Map","Key-value map","js-collect");  addHL("Set","Set","Unique values","js-collect");  addHL("WeakMap","WeakMap","Weak map","js-collect");  addHL("WeakSet","WeakSet","Weak set","js-collect");  addHL("RegExp","RegExp","Regular expression","js-regexp");  addHL("test","regexp.test","Test pattern","js-regexp");  addHL("exec","regexp.exec","Execute regex","js-regexp");  addHL("lastIndex","regexp.lastIndex","Last index","js-regexp");  addHL("source","regexp.source","Pattern source","js-regexp");  addHL("encodeURI","encodeURI","Encode URI","js-enc");  addHL("encodeURIComponent","encodeURIComponent","Encode component","js-enc");  addHL("decodeURI","decodeURI","Decode URI","js-enc");  addHL("decodeURIComponent","decodeURIComponent","Decode component","js-enc");  addHL("getContext","canvas.getContext","Get canvas context","js-canvas");  addHL("fillRect","ctx.fillRect","Fill rect","js-canvas");  addHL("strokeRect","ctx.strokeRect","Stroke rect","js-canvas");  addHL("clearRect","ctx.clearRect","Clear rect","js-canvas");  addHL("fillText","ctx.fillText","Fill text","js-canvas");  addHL("strokeText","ctx.strokeText","Stroke text","js-canvas");  addHL("beginPath","ctx.beginPath","Begin path","js-canvas");  addHL("closePath","ctx.closePath","Close path","js-canvas");  addHL("moveTo","ctx.moveTo","Move to","js-canvas");  addHL("lineTo","ctx.lineTo","Line to","js-canvas");  addHL("arc","ctx.arc","Draw arc","js-canvas");  addHL("bezierCurveTo","ctx.bezierCurveTo","Bezier curve","js-canvas");  addHL("quadraticCurveTo","ctx.quadraticCurveTo","Quad curve","js-canvas");  addHL("fill","ctx.fill","Fill path","js-canvas");  addHL("stroke","ctx.stroke","Stroke path","js-canvas");  addHL("clip","ctx.clip","Clip path","js-canvas");  addHL("save","ctx.save","Save state","js-canvas");  addHL("restore","ctx.restore","Restore state","js-canvas");  addHL("drawImage","ctx.drawImage","Draw image","js-canvas");  addHL("getImageData","ctx.getImageData","Get pixels","js-canvas");  addHL("putImageData","ctx.putImageData","Put pixels","js-canvas");  addHL("toDataURL","canvas.toDataURL","To data URL","js-canvas");  addHL("setItem","storage.setItem","Set item","js-store");  addHL("getItem","storage.getItem","Get item","js-store");  addHL("removeItem","storage.removeItem","Remove item","js-store");  addHL("clear","storage.clear","Clear storage","js-store");  addHL("key","storage.key","Get key by index","js-store");  addHL("storageLength","storage.length","Storage length","js-store");
+// ============================================================
+// HL COMPILATION ENGINE — Translates HL -> CSS in real-time
+// ============================================================
 
-// Parser
+function compileHLtoCSS(ast) {
+  var cssLines = [];
+  var selectorCount = {};
+  
+  function walk(node, parentSel) {
+    if (!node||!node.type) return;
+    if (node.type==='root') {
+      for (var k=0;k<node.children.length;k++) walk(node.children[k],'');
+      return;
+    }
+    var def = R[node.type];
+    var sel = (def&&def.c) ? '.'+def.c.replace(/ /g,'.') : '.hl-'+(node.type||'el');
+    var props = node.props||{};
+    var cssProps = [];
+    
+    for (var key in props) {
+      var val = props[key];
+      var entry = HL[key];
+      if (entry) {
+        var css = entry.css;
+        if (key==='shadow'&&val==='true'){cssProps.push('box-shadow: 0 4px 12px rgba(0,0,0,0.2),0 0 0 1px rgba(255,255,255,0.06)');continue}
+        if (key==='bold'&&val==='true'){cssProps.push('font-weight: 700');continue}
+        if (key==='italic'&&val==='true'){cssProps.push('font-style: italic');continue}
+        if (key==='hidden'&&val==='true'){cssProps.push('display: none');continue}
+        if (key==='nofocus'&&val==='true'){cssProps.push('outline: none; box-shadow: none');continue}
+        if (css.indexOf(':')>-1) {
+          // It's a compound value like "display:flex"
+          cssProps.push(css);
+        } else {
+          cssProps.push(css + ': ' + val);
+        }
+      }
+    }
+    
+    if (cssProps.length>0&&sel) {
+      if (!selectorCount[sel]) selectorCount[sel]=0;
+      selectorCount[sel]++;
+      cssLines.push(sel+' {');
+      for (var c=0;c<cssProps.length;c++) cssLines.push('  '+cssProps[c]+';');
+      cssLines.push('}');
+    }
+    
+    if (node.children&&node.children.length>0) {
+      for (var k=0;k<node.children.length;k++) walk(node.children[k],sel);
+    }
+  }
+  
+  walk(ast,'');
+  return cssLines.join('\\n');
+}
+
+function toggleCompiledCSS() {
+  var box=document.getElementById('compiled-css');
+  var btn=document.getElementById('cssToggle');
+  if (box.style.display==='block') {
+    box.style.display='none'; btn.classList.remove('active');
+  } else {
+    var text=document.getElementById('editor').value;
+    var ast=parseDSL(text);
+    var css=compileHLtoCSS(ast);
+    box.textContent=css||'/* No CSS found */';
+    box.style.display='block'; btn.classList.add('active');
+  }
+}
+
+// ============================================================
+// ELEMENT REGISTRY
+// ============================================================
+var R={};
+function reg(k,t,c,x){R[k]={t:t,c:c,x:x||null};}
+reg('page','div','nv-page'); reg('section','section','nv-section'); reg('header','header','nv-header');
+reg('footer','footer','nv-footer'); reg('nav','nav','nv-nav'); reg('main','main','nv-main');
+reg('aside','aside','nv-aside'); reg('article','article','nv-article'); reg('container','div','nv-container');
+reg('wrapper','div','nv-wrapper');
+reg('card','div','nv-card'); reg('cardbody','div','nv-card-body'); reg('cardheader','div','nv-card-header');
+reg('cardfooter','div','nv-card-footer'); reg('cardimg','img','nv-card-img'); reg('cardbg','div','nv-card-bg');
+reg('cardoverlay','div','nv-card-overlay'); reg('cardrow','div','nv-card-row'); reg('cardcol','div','nv-card-col'); reg('cardgrid','div','nv-card-grid');
+reg('title','div','nv-title'); reg('subtitle','div','nv-subtitle');
+reg('h1','h1','nv-h1'); reg('h2','h2','nv-h2'); reg('h3','h3','nv-h3');
+reg('h4','h4','nv-h4'); reg('h5','h5','nv-h5'); reg('h6','h6','nv-h6');
+reg('heading1','h1','nv-h1'); reg('heading2','h2','nv-h2'); reg('heading3','h3','nv-h3');
+reg('heading4','h4','nv-h4'); reg('heading5','h5','nv-h5'); reg('heading6','h6','nv-h6');
+reg('text','p','nv-text'); reg('span','span','nv-span'); reg('label','label','nv-label');
+reg('caption','small','nv-caption'); reg('paragraph','p','nv-paragraph'); reg('blockquote','blockquote','nv-blockquote');
+reg('code','code','nv-code'); reg('pre','pre','nv-pre'); reg('strong','strong','nv-strong');
+reg('em','em','nv-em'); reg('linktext','span','nv-link-text'); reg('highlight','mark','nv-highlight');
+reg('input','input','nv-input'); reg('textarea','textarea','nv-textarea'); reg('select','select','nv-select');
+reg('option','option','nv-option'); reg('checkbox','input','nv-checkbox','checkbox'); reg('radio','input','nv-radio','radio');
+reg('switch','div','nv-switch'); reg('toggle','div','nv-toggle');
+reg('slider','input','nv-slider','range'); reg('range','input','nv-range','range');
+reg('datepicker','input','nv-datepicker','date'); reg('timepicker','input','nv-timepicker','time');
+reg('fileinput','input','nv-fileinput','file'); reg('colorpick','input','nv-colorpick','color');
+reg('searchbox','input','nv-searchbox','search'); reg('email','input','nv-emailinput','email');
+reg('number','input','nv-numberinput','number'); reg('tel','input','nv-telinput','tel');
+reg('url','input','nv-urlinput','url'); reg('pass','input','nv-password','password');
+reg('button','button','nv-button'); reg('primarybtn','button','nv-button primary');
+reg('secondarybtn','button','nv-button secondary'); reg('outlinebtn','button','nv-button outline');
+reg('ghostbtn','button','nv-button ghost'); reg('iconbtn','button','nv-icon-btn'); reg('fab','button','nv-fab');
+reg('linkbtn','a','nv-link-btn'); reg('actionbtn','button','nv-action-btn'); reg('closebtn','button','nv-close-btn');
+reg('menubtn','button','nv-menu-btn'); reg('tabbtn','button','nv-tab-btn'); reg('togglebtn','button','nv-toggle-btn');
+reg('chipbtn','button','nv-chip-btn'); reg('uploadbtn','button','nv-upload-btn');
+reg('link','a','nv-link'); reg('navitem','a','nv-nav-item'); reg('navlink','a','nv-nav-link');
+reg('breadcrumb','span','nv-breadcrumb'); reg('tab','div','nv-tab'); reg('tabpanel','div','nv-tab-panel');
+reg('menu','div','nv-menu'); reg('menuitem','div','nv-menu-item'); reg('dropdown','div','nv-dropdown');
+reg('accordion','div','nv-accordion'); reg('accitem','div','nv-accordion-item');
+reg('stepper','div','nv-stepper'); reg('step','div','nv-step'); reg('pagination','div','nv-pagination'); reg('sidebar','div','nv-sidebar');
+reg('list','ul','nv-list'); reg('li','li','nv-list-item'); reg('ol','ol','nv-ordered-list');
+reg('ul','ul','nv-bullet-list'); reg('checklist','ul','nv-checklist'); reg('chipgroup','div','nv-chip-group');
+reg('chip','span','nv-chip'); reg('badge','span','nv-badge'); reg('tag','span','nv-tag'); reg('avatar','div','nv-avatar');
+reg('image','img','nv-image'); reg('img','img','nv-img'); reg('aimg','img','nv-avatar-img');
+reg('icon','span','nv-icon'); reg('video','div','nv-video'); reg('audio','div','nv-audio'); reg('canvas','canvas','nv-canvas');
+reg('iframe','div','nv-iframe'); reg('map','div','nv-map');
+reg('carousel','div','nv-carousel'); reg('citem','div','nv-carousel-item');
+reg('slideshow','div','nv-slideshow'); reg('slide','div','nv-slide'); reg('gallery','div','nv-gallery'); reg('media','div','nv-media');
+reg('row','div','nv-row'); reg('col','div','nv-col'); reg('grid','div','nv-grid');
+reg('gitem','div','nv-grid-item'); reg('flex','div','nv-flex'); reg('fitem','div','nv-flex-item');
+reg('stack','div','nv-stack'); reg('divider','div','nv-divider'); reg('spacer','div','nv-spacer');
+reg('group','div','nv-group'); reg('inline','div','nv-inline'); reg('center','div','nv-center');
+reg('panel','div','nv-panel'); reg('toolbar','div','nv-toolbar'); reg('abar','div','nv-actionbar');
+reg('hero','div','nv-hero'); reg('banner','div','nv-banner'); reg('toast','div','nv-toast');
+reg('snackbar','div','nv-snackbar'); reg('modal','div','nv-modal');
+reg('table','table','nv-table'); reg('thead','thead','nv-thead'); reg('tbody','tbody','nv-tbody');
+reg('tr','tr','nv-tr'); reg('td','td','nv-td'); reg('th','th','nv-th');
+reg('progress','div','nv-progress'); reg('pbar','div','nv-progress-bar');
+reg('meter','div','nv-meter'); reg('spinner','div','nv-spinner');
+reg('form','form','nv-form'); reg('fieldset','fieldset','nv-fieldset'); reg('legend','legend','nv-legend');
+reg('tooltip','div','nv-tooltip'); reg('popover','div','nv-popover'); reg('dialog','div','nv-dialog');
+reg('alert','div','nv-alert'); reg('notif','div','nv-notification');
+reg('skeleton','div','nv-skeleton'); reg('placeholder','div','nv-placeholder');
+
+// ============================================================
+// PARSER
+// ============================================================
 function parseDSL(text) {
-  var lines = text.split(String.fromCharCode(10));
-  var root = {type:'root',children:[],props:{}};
-  var stack = [{node:root,indent:-1}];
-  for (var i=0;i<lines.length;i++) {
-    var raw = lines[i];
-    var trimmed = raw.trimEnd();
-    if (trimmed.trim()===''||trimmed.trim().startsWith('//')) continue;
-    var indent = raw.length - raw.trimStart().length;
-    var content = trimmed.trim();
-    var m = content.match(/^(\w+)(?:\s+"([^"]*)")?(?:\s+(.+))?$/);
-    if (!m) {
-      if (content.indexOf(':')>-1) {
-        var pm = content.match(/^([\w-]+)\s*:\s*(.+)$/);
-        if (pm) stack[stack.length-1].node.props[pm[1].trim()] = pm[2].trim();
+  var lines=text.split(String.fromCharCode(10));
+  var root={type:'root',children:[],props:{}};
+  var stack=[{node:root,indent:-1}];
+  for(var i=0;i<lines.length;i++){
+    var raw=lines[i];
+    var trimmed=raw.trimEnd();
+    if(trimmed.trim()===''||trimmed.trim().startsWith('//'))continue;
+    var indent=raw.length-raw.trimStart().length;
+    var content=trimmed.trim();
+    var m=content.match(/^(\w+)(?:\s+"([^"]*)")?(?:\s+(.+))?$/);
+    if(!m){
+      if(content.indexOf(':')>-1){
+        var pm=content.match(/^([\w-]+)\s*:\s*(.+)$/);
+        if(pm)stack[stack.length-1].node.props[pm[1].trim()]=pm[2].trim();
       }
       continue;
     }
-    var type = m[1].toLowerCase();
-    var txt = m[2]||'';
-    var rest = m[3]||'';
-    var props = {};
-    if (rest) {
-      var pp = /([\w-]+)\s*:\s*("([^"]*)"|\S+)/g;
+    var type=m[1].toLowerCase();
+    var txt=m[2]||'';
+    var rest=m[3]||'';
+    var props={};
+    if(rest){
+      var pp=/([\w-]+)\s*:\s*("([^"]*)"|\S+)/g;
       var mm;
-      while ((mm=pp.exec(rest))!==null) {
-        props[mm[1]] = mm[3]!==undefined ? mm[3] : mm[2];
-      }
+      while((mm=pp.exec(rest))!==null)props[mm[1]]=mm[3]!==undefined?mm[3]:mm[2];
     }
-    while (stack.length>1 && indent<=stack[stack.length-1].indent) stack.pop();
-    var node = {type:type,text:txt,props:props,children:[]};
+    while(stack.length>1&&indent<=stack[stack.length-1].indent)stack.pop();
+    var node={type:type,text:txt,props:props,children:[]};
     stack[stack.length-1].node.children.push(node);
     stack.push({node:node,indent:indent});
-    if (type==='page' && txt) node.props['_title']=txt;
+    if(type==='page'&&txt)node.props['_title']=txt;
   }
   return root;
 }
 
-// Renderer
+// ============================================================
+// RENDERER
+// ============================================================
 function $(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt)e.textContent=txt;return e;}
-function renderNode(node, container, gp) {
-  gp = gp||{};
-  if (!node||!node.type) return;
-  if (node.type==='root'){for(var k=0;k<node.children.length;k++)renderNode(node.children[k],container,Object.assign({},gp,node.props));return;}
-  var def = R[node.type];
-  if (!def){var el=$('span','',node.text||node.type);el.style.cssText='color:#999;font-size:12px';container.appendChild(el);return;}
+function renderNode(node,container,gp){
+  gp=gp||{};
+  if(!node||!node.type)return;
+  if(node.type==='root'){for(var k=0;k<node.children.length;k++)renderNode(node.children[k],container,Object.assign({},gp,node.props));return;}
+  var def=R[node.type];
+  if(!def){var el=$('span','',node.text||node.type);el.style.cssText='color:#999;font-size:12px';container.appendChild(el);return;}
   var el;
   switch(node.type){
-    case 'page': el=$('div','');if(node.text){el.appendChild($('div','nv-page-title',node.text));}break;
-    case 'card':
-      el=$('div','nv-card');
-      var r=node.props.radius||gp.radius||'12px';
-      el.style.setProperty('--nv-radius',r);
-      el.style.borderRadius=r;
-      break;
+    case 'page':el=$('div','');if(node.text)el.appendChild($('div','nv-page-title',node.text));break;
+    case 'card':el=$('div','nv-card');var r=node.props.radius||gp.radius||'12px';el.style.setProperty('--nv-radius',r);el.style.borderRadius=r;break;
     case 'input':case 'email':case 'number':case 'tel':case 'url':case 'pass':case 'search':
-      el=document.createElement('input');el.className='nv-input';el.placeholder=node.text||'Enter...';
-      if(def.x)el.type=def.x;if(node.props.value)el.value=node.props.value;break;
-    case 'textarea': el=document.createElement('textarea');el.className='nv-textarea';el.placeholder=node.text||'Enter...';el.rows=3;break;
+      el=document.createElement('input');el.className='nv-input';el.placeholder=node.text||'Enter...';if(def.x)el.type=def.x;if(node.props.value)el.value=node.props.value;break;
+    case 'textarea':el=document.createElement('textarea');el.className='nv-textarea';el.placeholder=node.text||'Enter...';el.rows=3;break;
     case 'button':case 'primarybtn':case 'secondarybtn':case 'outlinebtn':case 'ghostbtn':
       el=document.createElement('button');el.className=def.c;el.textContent=node.text||'Button';break;
     case 'toggle':case 'switch':
-      el=$('div','nv-toggle');
-      var lbl=$('span','',node.text||'Toggle');
+      el=$('div','nv-toggle');var lbl=$('span','',node.text||'Toggle');
       var trk=document.createElement('div');trk.className='nv-toggle-track';
       var thb=document.createElement('div');thb.className='nv-toggle-thumb';
       trk.appendChild(thb);trk.onclick=function(){this.classList.toggle('on');};
-      el.appendChild(lbl);el.appendChild(trk);
-      break;
-    case 'progress': el=$('div','nv-progress');var bar=$('div','nv-progress-bar');bar.style.width=node.props.value||'60%';el.appendChild(bar);break;
-    case 'badge': el=$('span','nv-badge '+(node.props.color||'blue'),node.text||'Badge');break;
-    case 'avatar': el=$('div','nv-avatar',node.text||'U');el.style.background=node.props.color||'#6c5ce7';break;
-    case 'grid': el=$('div','nv-grid');break;
-    case 'gitem': el=$('div','nv-grid-item');break;
-    case 'chip': el=$('span','nv-chip',node.text||'Chip');break;
-    case 'divider': el=$('div','nv-divider');break;
-    case 'link':
-      el=document.createElement('a');el.className='nv-link';el.textContent=node.text||'Link';el.href='#';
-      if(node.props.page){(function(p){el.onclick=function(e){e.preventDefault();navigateTo(p);};})(node.props.page);}
-      break;
-    case 'image':case 'img':
-      el=document.createElement('img');el.className='nv-image';
-      el.src=node.props.src||'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22180%22%3E%3Crect fill=%22%23e5e7eb%22 width=%22300%22 height=%22180%22/%3E%3Ctext fill=%22%23999%22 font-size=%2214%22 x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22%3EImage%3C/text%3E%3C/svg%3E';
-      el.alt=node.text||'Image';break;
-    case 'row': el=$('div','nv-row');break;
-    case 'title': el=$('div','nv-title',node.text||'Title');break;
-    case 'subtitle': el=$('div','nv-subtitle',node.text||'Subtitle');break;
-    case 'text':case 'paragraph': el=$('p','nv-text',node.text||'Text...');break;
-    default:
-      el=document.createElement(def.t||'div');el.className=def.c||'';
-      if(node.text)el.textContent=node.text;if(def.x)el.type=def.x;break;
+      el.appendChild(lbl);el.appendChild(trk);break;
+    case 'progress':el=$('div','nv-progress');var bar=$('div','nv-progress-bar');bar.style.width=node.props.value||'60%';el.appendChild(bar);break;
+    case 'badge':el=$('span','nv-badge '+(node.props.color||'blue'),node.text||'Badge');break;
+    case 'avatar':el=$('div','nv-avatar',node.text||'U');el.style.background=node.props.color||'#6c5ce7';break;
+    case 'grid':el=$('div','nv-grid');break;
+    case 'gitem':el=$('div','nv-grid-item');break;
+    case 'chip':el=$('span','nv-chip',node.text||'Chip');break;
+    case 'divider':el=$('div','nv-divider');break;
+    case 'link':el=document.createElement('a');el.className='nv-link';el.textContent=node.text||'Link';el.href='#';if(node.props.page){(function(p){el.onclick=function(e){e.preventDefault();navigateTo(p);};})(node.props.page);}break;
+    case 'image':case 'img':el=document.createElement('img');el.className='nv-image';el.src=node.props.src||'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22180%22%3E%3Crect fill=%22%23e5e7eb%22 width=%22300%22 height=%22180%22/%3E%3Ctext fill=%22%23999%22 font-size=%2214%22 x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22%3EImage%3C/text%3E%3C/svg%3E';el.alt=node.text||'Image';break;
+    case 'row':el=$('div','nv-row');break;
+    case 'title':el=$('div','nv-title',node.text||'Title');break;
+    case 'subtitle':el=$('div','nv-subtitle',node.text||'Subtitle');break;
+    case 'text':case 'paragraph':el=$('p','nv-text',node.text||'Text...');break;
+    default:el=document.createElement(def.t||'div');el.className=def.c||'';if(node.text)el.textContent=node.text;if(def.x)el.type=def.x;break;
   }
   if(el){
     if(node.props.radius)el.style.borderRadius=node.props.radius;
@@ -330,11 +353,8 @@ function navigateTo(pn){
   var ast=parseDSL(dsl);
   var found=false;
   function s(node){
-    if(node.type==='page'&&node.props['_title']&&node.props['_title'].toLowerCase().replace(/\s+/g,'')===pn.toLowerCase().replace(/\s+/g,'')){
-      renderNode({type:'root',children:node.children,props:{}},pc);found=true;return true;
-    }
-    for(var k=0;k<node.children.length;k++){if(s(node.children[k]))return true;}
-    return false;
+    if(node.type==='page'&&node.props['_title']&&node.props['_title'].toLowerCase().replace(/\s+/g,'')===pn.toLowerCase().replace(/\s+/g,'')){renderNode({type:'root',children:node.children,props:{}},pc);found=true;return true;}
+    for(var k=0;k<node.children.length;k++){if(s(node.children[k]))return true;}return false;
   }
   s(ast);
   if(!found){pc.innerHTML='';renderNode(ast,pc);}
@@ -352,101 +372,133 @@ function renderFromEditor(){
     renderNode(ast,pc);
     var n=0;function cnt(node){n++;for(var k=0;k<node.children.length;k++)cnt(node.children[k]);}cnt(ast);
     document.getElementById('elementCount').textContent=n+' elements';
-  }catch(e){eb.textContent='Warning: '+e.message;eb.classList.add('show');}
+    var cssBox=document.getElementById('compiled-css');
+    if(cssBox.style.display==='block')cssBox.textContent=compileHLtoCSS(ast);
+  }catch(e){eb.textContent='Error: '+e.message;eb.classList.add('show');}
 }
 
-// Editor setup
+// Editor
 var editor=document.getElementById('editor');
 editor.addEventListener('input',function(){
   document.getElementById('lineCount').textContent='Line '+editor.value.split(String.fromCharCode(10)).length;
-  // Instant render on every keystroke
-  var pp=document.getElementById('preview-panel');
-  if(window.innerWidth>767||!pp.classList.contains('hidden')){
-    renderFromEditor();
-  }
+  var pp=document.getElementById('phonePreviewWrap');
+  if(window.innerWidth>767||!pp.classList.contains('hidden'))renderFromEditor();
+  showAutocomplete();
 });
 
+// ============================================================
+// AUTOCOMPLETE
+// ============================================================
+var acBox=document.getElementById('autocomplete-box');
+var acIdx=-1,acItems=[],acActive=false;
+
+function showAutocomplete(){
+  var text=editor.value;
+  var pos=editor.selectionStart;
+  var before=text.substring(0,pos);
+  var lines=before.split(String.fromCharCode(10));
+  var line=lines[lines.length-1];
+  var m=line.match(/(^|\s+)([a-zA-Z][\w-]*)$/);
+  if(!m||m[2].length<1){acBox.style.display='none';acActive=false;return;}
+  var partial=m[2].toLowerCase();
+  var results=[];
+  for(var key in HL){
+    var kl=key.toLowerCase();
+    if(kl.indexOf(partial)===0||kl.indexOf(partial)>0)results.push({hl:key,css:HL[key].css,desc:HL[key].desc,cat:HL[key].cat});
+  }
+  results.sort(function(a,b){
+    var al=a.hl.toLowerCase(),bl=b.hl.toLowerCase();
+    var ea=(al===partial)?0:(al.indexOf(partial)===0?1:2),eb=(bl===partial)?0:(bl.indexOf(partial)===0?1:2);
+    return ea!==eb?ea-eb:a.hl.localeCompare(b.hl);
+  });
+  if(results.length===0){acBox.style.display='none';acActive=false;return;}
+  var display=results.slice(0,50);
+  acItems=results;acIdx=-1;acActive=true;
+  var er=editor.getBoundingClientRect();
+  acBox.style.top='42px';
+  acBox.style.left=(12+Math.min(line.length*7.8,260))+'px';
+  acBox.style.maxWidth=Math.min(er.width-24,420)+'px';
+  var html='',cat='';
+  for(var i=0;i<display.length;i++){
+    var it=display[i],c=it.cat||'css';
+    if(c!==cat){cat=c;html+='<div class="ac-cat">'+c.toUpperCase()+'</div>';}
+    html+='<div class="ac-item" onclick="pickAC('+i+')"><span><span class="ac-hl">'+it.hl.substring(0,partial.length)+'</span>'+it.hl.substring(partial.length)+'<br><small>'+it.desc+'</small></span><span class="ac-css">'+it.css+'</span></div>';
+  }
+  acBox.innerHTML=html;acBox.style.display='block';
+}
+
+function pickAC(i){
+  if(i<0||i>=acItems.length)return;
+  var it=acItems[i],text=editor.value,pos=editor.selectionStart;
+  var before=text.substring(0,pos),after=text.substring(pos);
+  var m=before.match(/([a-zA-Z][\w-]*)$/);
+  if(m){
+    var ws=pos-m[1].length;
+    editor.value=text.substring(0,ws)+it.hl+text.substring(pos);
+    editor.selectionStart=editor.selectionEnd=ws+it.hl.length;
+    editor.focus();
+  }
+  acBox.style.display='none';acActive=false;renderFromEditor();
+}
+
+editor.addEventListener('keydown',function(e){
+  if(!acActive)return;
+  if(e.key==='ArrowDown'){e.preventDefault();acIdx=Math.min(acIdx+1,acItems.length-1);updateAC();}
+  else if(e.key==='ArrowUp'){e.preventDefault();acIdx=Math.max(acIdx-1,-1);updateAC();}
+  else if(e.key==='Enter'||e.key==='Tab'){if(acIdx>=0){e.preventDefault();pickAC(acIdx);}}
+  else if(e.key==='Escape'){acBox.style.display='none';acActive=false;}
+});
+
+function updateAC(){
+  var items=acBox.querySelectorAll('.ac-item');
+  for(var i=0;i<items.length;i++){items[i].classList.toggle('sel',i===acIdx);if(i===acIdx)items[i].scrollIntoView({block:'nearest'});}
+}
+
+document.addEventListener('click',function(e){
+  if(!acBox.contains(e.target)&&e.target!==editor){acBox.style.display='none';acActive=false;}
+});
+
+function toggleLiveRender(){
+  var cb=document.getElementById('liveToggle');
+  if(cb.checked)renderFromEditor();else{}
+}
+
 // Default demo
-editor.value = [
-  '// NovaDSL Demo - 155 elements supported',
+editor.value=[
+  '// HL Language Demo - 1200+ CSS/HTML/JS properties',
+  '// Type any property name and see autocomplete suggestions',
   '',
-  'Page "NovaDSL Demo"',
+  'Card radius: 20px bg: #fff shadow: true',
+  '  Title "NovaDSL HL Engine"',
+  '  Subtitle "Type below - autocomplete shows instantly"',
+  '  Text "Try typing: corners blur bg-effect shadow bold"',
   '',
-  '  Card radius: 20px',
-  '    Title "Welcome to NovaDSL"',
-  '    Subtitle "Real 155-element engine"',
-  '    Input "Your name"',
-  '    Primarybtn "Get Started"',
-  '    Divider',
-  '    Row',
-  '      Avatar "A" color: #6c5ce7',
-  '      Avatar "B" color: #e17055',
-  '      Avatar "C" color: #00b894',
-  '    Text "This card has border-radius: 20px"',
-  '    Link "Learn more" page: "About"',
+  'Card radius: 0px bg: #111',
+  '  Title "Dark Sharp Card" color: #fff',
+  '  Input "Try typing radius: here..." radius: 0px',
+  '  Primarybtn "CSS button shows compiled code" radius: 0px',
   '',
-  '  Card radius: 0px',
-  '    Title "Square Card"',
-  '    Subtitle "radius: 0px gives sharp corners"',
-  '    Grid',
-  '      Gitem',
-  '        span "42" bold: true',
-  '        label "Posts"',
-  '      Gitem',
-  '        span "128" bold: true',
-  '        label "Followers"',
-  '      Gitem',
-  '        span "16" bold: true',
-  '        label "Projects"',
-  '      Gitem',
-  '        span "99%" bold: true',
-  '        label "Uptime"',
-  '    Progress value: 75%',
+  'Card bg: rgba(108,92,231,0.1) blur: 2px',
+  '  Title "Blur Glass"',
+  '  Text "Every CSS property works through HL names"',
   '',
-  '  Card radius: 50px',
-  '    Title "Pill Card"',
-  '    Subtitle "radius: 50px is extra rounded"',
-  '    Badge "New" color: green',
-  '    Badge "Hot" color: red',
-  '    Badge "Beta" color: yellow',
-  '    Chip "React" Chip "Vue" Chip "Svelte"',
-  '    Row',
-  '      Toggle "Dark mode"',
-  '    Toggle "Notifications"',
-  '    Link "Navigation demo"',
-  '',
-  'Footer "\u00a9 2026 NovaDSL Real Engine"'
+  'Footer "\\u00a9 2026 NovaDSL HL Engine"'
 ].join(String.fromCharCode(10));
+
+var dictCount=0;for(var k in HL)dictCount++;
+document.getElementById('dictCount').textContent=dictCount+' properties';
 
 renderFromEditor();
 
-function formatDSL(){
-  var lines=editor.value.split(String.fromCharCode(10));
-  editor.value=lines.join(String.fromCharCode(10));
-  renderFromEditor();
-}
-function switchMobileTab(tab){
-  var ep=document.getElementById('editor-panel');
-  var pp=document.getElementById('preview-panel');
-  var tc=document.getElementById('tabCode');
-  var tp=document.getElementById('tabPreview');
+function formatDSL(){var l=editor.value.split(String.fromCharCode(10));editor.value=l.join(String.fromCharCode(10));renderFromEditor();}
+function switchMobileTab(t){
+  var ep=document.getElementById('editor-panel'),pp=document.getElementById('phonePreviewWrap');
+  var tc=document.getElementById('tabCode'),tp=document.getElementById('tabPreview');
   if(window.innerWidth>767)return;
-  if(tab==='code'){
-    ep.classList.remove('hidden');pp.classList.add('hidden');
-    tc.classList.add('active');tp.classList.remove('active');
-  }else{
-    ep.classList.add('hidden');pp.classList.remove('hidden');
-    tc.classList.remove('active');tp.classList.add('active');
-    renderFromEditor();
-  }
+  if(t==='code'){ep.classList.remove('hidden');pp.classList.add('hidden');tc.classList.add('active');tp.classList.remove('active');}
+  else{ep.classList.add('hidden');pp.classList.remove('hidden');tc.classList.remove('active');tp.classList.add('active');renderFromEditor();}
 }
-// Auto-switch on resize
 window.addEventListener('resize',function(){
-  if(window.innerWidth>767){
-    document.getElementById('editor-panel').classList.remove('hidden');
-    document.getElementById('preview-panel').classList.remove('hidden');
-  }
+  if(window.innerWidth>767){document.getElementById('editor-panel').classList.remove('hidden');document.getElementById('phonePreviewWrap').classList.remove('hidden');}
 });
-</script>
-</body>
-</html>
+</script></body></html>
